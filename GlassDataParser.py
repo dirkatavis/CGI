@@ -81,14 +81,52 @@ def main():
         log.error(f"[LOGIN] Failed to initialize session → {login_result}")
         return
 
+
     mva_list = read_mva_list(MVA_CSV)
     results = []
 
     mva_input_page = MVAInputPage(driver)
+    vehicle_properties_page = VehiclePropertiesPage(driver)
+
+    # --- Workaround: Query a dummy MVA first to prime the AUT ---
+    dummy_mva = "50227203"
+    try:
+        input_field = mva_input_page.find_input()
+        if not (input_field and input_field.is_enabled() and input_field.is_displayed()):
+            try:
+                input_field = WebDriverWait(driver, 5, poll_frequency=0.25).until(
+                    lambda d: (
+                        (f := mva_input_page.find_input()) and f.is_enabled() and f.is_displayed() and f
+                    )
+                )
+            except TimeoutException:
+                input_field = None
+        if input_field:
+            input_field.clear()
+            input_field.send_keys(dummy_mva)
+            log.info(f"[MVA_INPUT][WORKAROUND] Queried dummy MVA: {dummy_mva}")
+            # Wait for VIN and Desc to appear (ignore results)
+            def non_empty_value(label):
+                def _predicate(driver):
+                    val = get_vehicle_property_by_label(driver, label)
+                    return val if val and val != "N/A" else False
+                return _predicate
+            try:
+                WebDriverWait(driver, 12, poll_frequency=0.5).until(non_empty_value("VIN"))
+            except Exception:
+                pass
+            try:
+                WebDriverWait(driver, 12, poll_frequency=0.5).until(non_empty_value("Desc"))
+            except Exception:
+                pass
+        else:
+            log.warning(f"[MVA_INPUT][WORKAROUND] Could not find input field for dummy MVA.")
+    except Exception as e:
+        log.warning(f"[MVA_INPUT][WORKAROUND] Dummy MVA query failed: {e}")
+
+    # --- Now process the real MVA list as usual ---
     for mva in mva_list:
         try:
-
-            # Try to use the input field immediately if available
             input_field = mva_input_page.find_input()
             if not (input_field and input_field.is_enabled() and input_field.is_displayed()):
                 try:
@@ -99,16 +137,36 @@ def main():
                     )
                 except TimeoutException:
                     input_field = None
-
             if not input_field:
                 log.error(f"[MVA][FATAL] Could not find MVA input field for {mva}. Exiting script.")
                 driver.quit()
                 raise SystemExit(1)
-            input_field.clear()
+            import selenium.webdriver.common.keys as Keys
+            # Aggressively clear the field
+            for _ in range(3):
+                input_field.send_keys(Keys.Keys.CONTROL + 'a')
+                input_field.send_keys(Keys.Keys.DELETE)
+                input_field.clear()
+                time.sleep(0.2)
+            # Wait up to 1s (4 x 250ms) for the field to be empty
+            for _ in range(4):
+                if input_field.get_attribute("value") == "":
+                    break
+                time.sleep(0.25)
+            else:
+                log.warning(f"[MVA_INPUT] Field not empty after clearing attempts!")
+            # Wait up to 3 seconds for the field to be empty
+            for _ in range(15):
+                if input_field.get_attribute("value") == "":
+                    break
+                time.sleep(0.2)
+            if input_field.get_attribute("value") != "":
+                log.warning(f"[MVA_INPUT] Field not fully cleared before entering new MVA!")
+            else:
+                log.info(f"[MVA_INPUT] Field cleared before entering new MVA.")
             input_field.send_keys(mva)
             log.info(f"[MVA_INPUT] Entered MVA: {mva}")
 
-            # Wait for VIN and Desc to appear (max 12s)
             def non_empty_value(label):
                 def _predicate(driver):
                     val = get_vehicle_property_by_label(driver, label)
@@ -123,11 +181,19 @@ def main():
                 desc = WebDriverWait(driver, 12, poll_frequency=0.5).until(non_empty_value("Desc"))
             except Exception:
                 desc = "N/A"
+            # Wait for the UI to echo the new MVA before scraping VIN/Desc
+            last8 = mva[-8:]
+            try:
+                echoed = WebDriverWait(driver, 12, poll_frequency=0.5).until(
+                    lambda d: vehicle_properties_page.find_mva_echo(last8, timeout=1)
+                )
+                log.info(f"[MVA][WAIT] UI echoed MVA {last8}")
+            except Exception:
+                log.warning(f"[MVA][WAIT] UI did not echo MVA {last8} in time; results may be stale.")
             results.append((mva, vin, desc))
         except Exception as e:
             log.error(f"[MVA][ERROR] {mva} - {e}")
             results.append((mva, "N/A", "N/A"))
-
 
     abs_results_path = os.path.abspath(RESULTS_FILE)
     log.info(f"[RESULTS] Writing results to: {abs_results_path}")

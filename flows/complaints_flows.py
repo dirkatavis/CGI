@@ -119,63 +119,76 @@ def find_pm_tiles(driver, mva: str):
 
 def associate_existing_complaint(driver, mva: str) -> dict:
     """
-    Look for existing PM complaints and associate them.
-    Flow: select complaint tile → Next (complaint) → Next (mileage) → Opcode (PM Gas) → Finalize Work Item.
+    Look for existing glass complaints and associate them.
+    Flow: select complaint tile → Next (complaint) → Next (mileage) → Opcode (Glass) → Finalize Work Item.
     """
-    log.debug(f"[COMPLAINT] {mva} - Associating existing complaint.")
+    log.debug(f"[GLASS][COMPLAINT] {mva} - Associating existing glass complaint.")
     try:
+        # Wait for complaint tiles or Add New Complaint button to appear
+        time.sleep(3)
+        # Find all complaint tiles
         tiles = driver.find_elements(
             By.XPATH, "//div[contains(@class,'fleet-operations-pwa__complaintItem__')]"
         )
-        time.sleep(3)  # wait for tiles to load
-        if not tiles:
-            log.info(f"[COMPLAINT][EXISTING] {mva} - no complaint tiles found")
-            return {"status": "skipped_no_complaint", "mva": mva}
+        # Look for a glass complaint tile (by text or by image alt)
+        glass_tile = None
+        for t in tiles:
+            # Check text content
+            text = t.text.lower()
+            if "glass" in text:
+                glass_tile = t
+                break
+            # Check for image alt attribute
+            try:
+                img = t.find_element(By.XPATH, ".//img[contains(@class,'tileImage')]" )
+                alt = img.get_attribute("alt")
+                if alt and "glass" in alt.lower():
+                    glass_tile = t
+                    break
+            except Exception:
+                pass
+        if glass_tile:
+            try:
+                glass_tile.click()
+                log.info(f"[GLASS][COMPLAINT][ASSOCIATED] {mva} - glass complaint selected")
+            except Exception as e:
+                log.warning(f"[GLASS][COMPLAINT][WARN] {mva} - failed to click glass complaint tile → {e}")
+                return {"status": "failed", "reason": "tile_click", "mva": mva}
 
-        # Filter PM complaints only
-        pm_tiles = [t for t in tiles if any(label in t.text for label in ["PM", "PM Hard Hold - PM"])]
-        if not pm_tiles:
-            log.info(f"[COMPLAINT][EXISTING] {mva} - no PM complaints found")
-            return {"status": "skipped_no_complaint", "mva": mva}
+            # Step 1: Complaint → Next
+            from utils.ui_helpers import click_next_in_dialog
+            if not click_next_in_dialog(driver, timeout=8):
+                return {"status": "failed", "reason": "complaint_next", "mva": mva}
 
-        if not pm_tiles:
-            log.info(f"[COMPLAINT][EXISTING] {mva} - no PM complaints found")
-            return {"status": "no_pm", "mva": mva}
+            # Step 2: Mileage → Next
+            res = complete_mileage_dialog(driver, mva)
+            if res.get("status") != "ok":
+                return {"status": "failed", "reason": "mileage", "mva": mva}
 
-        # Click first matching PM complaint
-        tile = pm_tiles[0]
-        try:
-            tile.click()
-            log.info(f"[COMPLAINT][ASSOCIATED] {mva} - complaint '{tile.text.strip()}' selected")
-        except Exception as e:
-            log.warning(f"[COMPLAINT][WARN] {mva} - failed to click complaint tile → {e}")
-            return {"status": "failed", "reason": "tile_click", "mva": mva}
+            # Step 3: Opcode → Glass
+            res = select_opcode(driver, mva, code_text="Glass")
+            if res.get("status") != "ok":
+                return {"status": "failed", "reason": "opcode", "mva": mva}
 
-        # Step 1: Complaint → Next
-        from utils.ui_helpers import click_next_in_dialog
-        if not click_next_in_dialog(driver, timeout=8):
-            return {"status": "failed", "reason": "complaint_next", "mva": mva}
-
-        # Step 2: Mileage → Next
-        res = complete_mileage_dialog(driver, mva)
-        if res.get("status") != "ok":
-            return {"status": "failed", "reason": "mileage", "mva": mva}
-
-        # Step 3: Opcode → PM Gas
-        res = select_opcode(driver, mva, code_text="PM Gas")
-        if res.get("status") != "ok":
-            return {"status": "failed", "reason": "opcode", "mva": mva}
-
-        return {"status": "associated", "mva": mva}
-
+            return {"status": "associated", "mva": mva}
+        else:
+            # No glass complaint found, click Add New Complaint button
+            if click_element(driver, (By.XPATH, "//button[.//p[contains(text(),'Add New Complaint')]]")) or \
+               click_element(driver, (By.XPATH, "//button[normalize-space()='Add New Complaint']")) or \
+               click_element(driver, (By.XPATH, "//button[normalize-space()='Create New Complaint']")):
+                log.info(f"[GLASS][COMPLAINT][NEW] {mva} - Add New Complaint clicked (no glass complaint found)")
+                return {"status": "skipped_no_complaint", "mva": mva}
+            else:
+                log.warning(f"[GLASS][COMPLAINT][NEW][WARN] {mva} - could not click Add New Complaint")
+                return {"status": "failed", "reason": "add_btn", "mva": mva}
     except Exception as e:
-        log.warning(f"[COMPLAINT][WARN] {mva} - complaint association failed → {e}")
+        log.warning(f"[GLASS][COMPLAINT][WARN] {mva} - complaint association failed → {e}")
         return {"status": "failed", "reason": "exception", "mva": mva}
 
-def create_new_complaint(driver, mva: str) -> dict:
-    """Create a new complaint when no suitable PM complaint exists."""
-    log.debug(f"[COMPLAINT] {mva} - Creating new complaint.")
-    log.info(f"[COMPLAINT][NEW] {mva} - creating new complaint")
+def create_new_complaint(driver, mva: str, complaint_type: str = "glass") -> dict:
+    """Create a new complaint when no suitable glass complaint exists."""
+    log.debug(f"[GLASS][COMPLAINT] {mva} - Creating new glass complaint.")
+    log.info(f"[GLASS][COMPLAINT][NEW] {mva} - creating new glass complaint")
 
     try:
         # 1. Click Add New Complaint (or Create New Complaint)
@@ -183,44 +196,38 @@ def create_new_complaint(driver, mva: str) -> dict:
             click_element(driver, (By.XPATH, "//button[normalize-space()='Add New Complaint']"))
             or click_element(driver, (By.XPATH, "//button[normalize-space()='Create New Complaint']"))
         ):
-
-            log.warning(
-                "[COMPLAINT][NEW][WARN] {mva} - could not click Add/Create New Complaint"
-            )
+            log.warning(f"[GLASS][COMPLAINT][NEW][WARN] {mva} - could not click Add/Create New Complaint")
             return {"status": "failed", "reason": "add_btn"}
-        log.info(f"[COMPLAINT][NEW] {mva} - Add/Create New Complaint clicked")
+        log.info(f"[GLASS][COMPLAINT][NEW] {mva} - Add/Create New Complaint clicked")
         time.sleep(2)
 
         # 2. Handle Drivability (Yes/No). Simplest case -> always Yes
         if not click_element(driver, (By.XPATH, "//button[normalize-space()='Yes']")):
-            log.warning(
-                f"[COMPLAINT][NEW][WARN] {mva} - could not click Yes in Drivability step"
-            )
+            log.warning(f"[GLASS][COMPLAINT][NEW][WARN] {mva} - could not click Yes in Drivability step")
             return {"status": "failed", "reason": "drivability"}
-        log.info(f"[COMPLAINT][NEW] {mva} - Drivability Yes clicked")
+        log.info(f"[GLASS][COMPLAINT][NEW] {mva} - Drivability Yes clicked")
         time.sleep(1)
 
-        # 3) Complaint Type = PM (auto-advances, no Next button here)
-        if click_element(driver, (By.XPATH, "//button[normalize-space()='PM']")):
-            log.info(f"[COMPLAINT] {mva} - Complaint type 'PM' selected")
+        # 3) Complaint Type = Glass (auto-advances, no Next button here)
+        if click_element(driver, (By.XPATH, "//button[normalize-space()='Glass']")):
+            log.info(f"[GLASS][COMPLAINT] {mva} - Complaint type 'Glass' selected")
             time.sleep(2)  # allow auto-advance to Additional Info screen
         else:
-            log.warning(f"[COMPLAINT][WARN] {mva} - Complaint type 'PM' not found")
+            log.warning(f"[GLASS][COMPLAINT][WARN] {mva} - Complaint type 'Glass' not found")
             return {"status": "failed", "reason": "complaint_type", "mva": mva}
 
         # 4) Additional Info screen -> Submit
         if click_element(driver, (By.XPATH, "//button[normalize-space()='Submit Complaint']")):
-            log.info(f"[COMPLAINT] {mva} - Additional Info submitted")
+            log.info(f"[GLASS][COMPLAINT] {mva} - Additional Info submitted")
             time.sleep(2)
         else:
-            log.warning(f"[COMPLAINT][WARN] {mva} - could not submit Additional Info")
+            log.warning(f"[GLASS][COMPLAINT][WARN] {mva} - could not submit Additional Info")
             return {"status": "failed", "reason": "submit_info", "mva": mva}
 
         return {"status": "created"}
 
-
     except Exception as e:
-        log.error(f"[COMPLAINT][NEW][ERROR] {mva} - creation failed -> {e}")
+        log.error(f"[GLASS][COMPLAINT][NEW][ERROR] {mva} - creation failed -> {e}")
         return {"status": "failed", "reason": "exception"}
 
 def click_next_in_dialog(driver, timeout: int = 10) -> bool:

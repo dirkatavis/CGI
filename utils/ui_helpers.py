@@ -1,3 +1,31 @@
+def navigate_back_to_home(driver):
+    """
+    Placeholder for navigation logic to return to the home page in the UI.
+    """
+    log.info("[NAV] Navigating back to home (stub function called)")
+    # TODO: Implement actual navigation logic as needed
+    pass
+def find_elements(driver, locator, timeout=10):
+    """
+    Find all elements matching the locator within the timeout.
+    Args:
+        driver: WebDriver instance
+        locator: Tuple of (By.TYPE, "selector")
+        timeout: Timeout in seconds
+    Returns:
+        List of WebElements (may be empty if none found)
+    """
+    try:
+        WebDriverWait(driver, timeout).until(
+            EC.presence_of_element_located(locator)
+        )
+        return driver.find_elements(*locator)
+    except TimeoutException:
+        log.warning(f"Timeout waiting for elements: {locator}")
+        return []
+    except Exception as e:
+        log.error(f"Error finding elements {locator}: {e}")
+        return []
 """
 UI Helper utilities for Selenium interactions.
 

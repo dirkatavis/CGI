@@ -49,6 +49,16 @@ def read_mva_list(csv_path):
                 log.info(f"[CSV] Loading work item: {config.mva} (DamageType: {config.damage_type}, Location: {config.location})")
     return configs
 
+
+# ----------------------------------------------------------------------------
+# AUTHOR:       Dirk Steele <dirk.avis@mail.com>
+# DATE:         2026-01-12
+# DESCRIPTION:  Read glass work items from CSV and return WorkItemConfig objects.
+#               Skips comments and empty rows, logs each loaded config.
+# VERSION:      1.0.0
+# NOTES:        Expects columns: MVA, DamageType, Location.
+# ----------------------------------------------------------------------------
+
 def main():
     username = get_config("username")
     password = get_config("password")
@@ -63,6 +73,7 @@ def main():
 
     mva_list = read_mva_list(MVA_CSV)
     for work_item_config in mva_list:
+        # after finding the first work item type sought we can break out of the loop
         mva = work_item_config.mva
         mva_header = f"\n{'*'*32}\nMVA {mva}\n{'*'*32}"
         log.info(mva_header)
@@ -91,6 +102,12 @@ def main():
                         continue
                 import selenium.webdriver.common.keys as Keys
                 # Aggressively clear the field
+                # We don't need an aggressive clear here.  Just clear the field once and verify.  If still not cleared, log an error.
+                # Refactoring to simplify the logic. into one clear attempt followed by verification.
+                # we may need to have a slight delay after clear to allow UI to update(3000ms)
+                # Background knowledge: The application will clear the field with an <ENTER>. This is a shortcut we can use.
+
+
                 for _ in range(3):
                     input_field.send_keys(Keys.Keys.CONTROL + 'a')
                     input_field.send_keys(Keys.Keys.DELETE)
@@ -164,6 +181,15 @@ def main():
                 else:
                     time.sleep(2)
         time.sleep(2)
+
+# ----------------------------------------------------------------------------
+# AUTHOR:       Dirk Steele <dirk.avis@mail.com>
+# DATE:         2026-01-12
+# DESCRIPTION:  Main script logic. Logs in, iterates MVAs, checks for glass work items,
+#               and creates new ones if needed. Handles robust MVA input and error handling.
+# VERSION:      1.0.0
+# NOTES:        Uses robust field clearing and retry logic for reliability.
+# ----------------------------------------------------------------------------
 
 if __name__ == "__main__":
     main()

@@ -957,3 +957,99 @@ MVA 55859495
 2026-01-12 11:39:47,054 [WARNING] Timeout waiting to click element
 2026-01-12 11:39:57,359 [WARNING] Timeout waiting to click element
 2026-01-12 11:39:57,360 [WARNING] [GLASS][COMPLAINT][NEW][WARN] 55859495 - could not click Add/Create New Complaint
+2026-01-12 14:41:28,800 [INFO] [DRIVER] Detected Browser=143.0.3650.139, Driver=143.0.3650.80
+2026-01-12 14:41:28,806 [INFO] [DRIVER] Launching Edge - Browser 143.0.3650.139, Driver 143.0.3650.80
+2026-01-12 14:41:33,201 [INFO] [LOGIN_FLOW] Starting login handler.
+2026-01-12 14:41:33,204 [INFO] [NAV] Navigating to Login page - https://avisbudget.palantirfoundry.com/multipass/login
+2026-01-12 14:41:34,276 [WARNING] [NAV] Expected https://avisbudget.palantirfoundry.com/multipass/login, got https://avisbudget.palantirfoundry.com/multipass/automatic-login?realm=e6e04a33-f159-4321-ba01-d0c5cb20214b&collector_type=saml
+2026-01-12 14:41:34,287 [INFO] [LOGIN] Automatic login page detected. Assuming login will succeed.
+2026-01-12 14:41:44,640 [INFO] [LOGIN_FLOW] Microsoft SSO page not detected. Proceeding with standard login flow.
+2026-01-12 14:41:44,689 [INFO] [LOGIN] Clicking Compass Mobile button
+2026-01-12 14:41:44,914 [INFO] [LOGIN] Switched to Compass Mobile tab
+2026-01-12 14:41:48,704 [INFO] [LOGIN] WWID input field detected
+2026-01-12 14:41:48,704 [INFO] [LOGIN] Proceeding to WWID entry
+2026-01-12 14:41:48,970 [INFO] [LOGIN] WWID submitted via button
+2026-01-12 14:41:48,985 [INFO] [CSV] Loading work item: 53674854 (DamageType: REPLACEMENT, Location: WINDSHIELD)
+2026-01-12 14:41:48,985 [INFO] [CSV] Loading work item: 55859495 (DamageType: REPLACEMENT, Location: REAR)
+2026-01-12 14:41:48,986 [INFO] 
+********************************
+MVA 53674854
+********************************
+2026-01-12 14:41:48,987 [INFO] [MVA] Reviewing 53674854 (Type: REPLACEMENT, Location: WINDSHIELD)
+2026-01-12 14:41:50,093 [INFO] [MVA_INPUT] Field cleared before entering new MVA.
+2026-01-12 14:41:50,150 [INFO] [MVA_INPUT] Entered MVA: 53674854
+2026-01-12 14:41:50,151 [INFO] [MVA_VALIDATION] Waiting for vehicle properties to load for 53674854...
+2026-01-12 14:42:05,629 [WARNING] [MVA_VALIDATION] Vehicle properties not found for 53674854 - MVA may be invalid or non-existent
+2026-01-12 14:42:07,630 [INFO] 
+********************************
+MVA 55859495
+********************************
+2026-01-12 14:42:07,631 [INFO] [MVA] Reviewing 55859495 (Type: REPLACEMENT, Location: REAR)
+2026-01-12 14:42:08,575 [INFO] [MVA_INPUT] Field cleared before entering new MVA.
+2026-01-12 14:42:08,645 [INFO] [MVA_INPUT] Entered MVA: 55859495
+2026-01-12 14:42:08,661 [INFO] [MVA_VALIDATION] Waiting for vehicle properties to load for 55859495...
+2026-01-12 14:42:14,824 [INFO] [MVA_VALIDATION] Vehicle properties loaded successfully for 55859495
+2026-01-12 14:42:16,825 [INFO] [WORKITEM] 55859495 - pausing to let Work Items render...
+2026-01-12 14:42:25,856 [INFO] [WORKITEMS] 55859495 - collected 1 open work item(s)
+2026-01-12 14:42:25,891 [INFO] [DEBUG] Work item text: 'Open
+NO WORK NEEDED OR PERFORMED
+Complaints: Glass Damage - Windshield Chip
+Created At: 1/12/2026, 12:07:44 PM
+Estimated Labor Time: 0.1'
+2026-01-12 14:42:25,905 [INFO] [DEBUG] Text length: 136
+2026-01-12 14:42:25,919 [INFO] [DEBUG] Text repr: 'Open\nNO WORK NEEDED OR PERFORMED\nComplaints: Glass Damage - Windshield Chip\nCreated At: 1/12/2026, 12:07:44 PM\nEstimated Labor Time: 0.1'
+2026-01-12 14:42:25,933 [INFO] [DEBUG] Lowercased: 'open
+no work needed or performed
+complaints: glass damage - windshield chip
+created at: 1/12/2026, 12:07:44 pm
+estimated labor time: 0.1'
+2026-01-12 14:42:25,947 [INFO] [DEBUG] Contains 'glass': True
+2026-01-12 14:42:25,960 [INFO] [GLASS] Glass damage work item already exists for 55859495
+2026-01-12 15:53:27,616 [INFO] [DRIVER] Detected Browser=143.0.3650.139, Driver=143.0.3650.80
+2026-01-12 15:53:27,618 [INFO] [DRIVER] Launching Edge - Browser 143.0.3650.139, Driver 143.0.3650.80
+2026-01-12 15:53:31,362 [INFO] [LOGIN_FLOW] Starting login handler.
+2026-01-12 15:53:31,387 [INFO] [NAV] Navigating to Login page - https://avisbudget.palantirfoundry.com/multipass/login
+2026-01-12 15:53:32,502 [WARNING] [NAV] Expected https://avisbudget.palantirfoundry.com/multipass/login, got https://avisbudget.palantirfoundry.com/multipass/automatic-login?realm=e6e04a33-f159-4321-ba01-d0c5cb20214b&collector_type=saml
+2026-01-12 15:53:32,512 [INFO] [LOGIN] Automatic login page detected. Assuming login will succeed.
+2026-01-12 15:53:42,879 [INFO] [LOGIN_FLOW] Microsoft SSO page not detected. Proceeding with standard login flow.
+2026-01-12 15:53:42,933 [INFO] [LOGIN] Clicking Compass Mobile button
+2026-01-12 15:53:43,177 [INFO] [LOGIN] Switched to Compass Mobile tab
+2026-01-12 15:53:45,999 [INFO] [LOGIN] WWID input field detected
+2026-01-12 15:53:46,002 [INFO] [LOGIN] Proceeding to WWID entry
+2026-01-12 15:53:46,327 [INFO] [LOGIN] WWID submitted via button
+2026-01-12 15:53:46,342 [INFO] [CSV] Loading work item: 53674854 (DamageType: REPLACEMENT, Location: WINDSHIELD)
+2026-01-12 15:53:46,342 [INFO] [CSV] Loading work item: 55859495 (DamageType: REPLACEMENT, Location: REAR)
+2026-01-12 15:54:29,060 [INFO] 
+********************************
+MVA 53674854
+********************************
+2026-01-12 15:54:33,560 [INFO] [MVA] Reviewing 53674854 (Type: REPLACEMENT, Location: WINDSHIELD)
+2026-01-12 15:56:17,201 [INFO] [MVA_INPUT] Field cleared before entering new MVA.
+2026-01-12 15:56:24,377 [INFO] [MVA_INPUT] Entered MVA: 53674854
+2026-01-12 15:56:25,834 [INFO] [MVA_VALIDATION] Waiting for vehicle properties to load for 53674854...
+2026-01-12 15:57:14,273 [INFO] [MVA_VALIDATION] Vehicle properties loaded successfully for 53674854
+2026-01-12 15:57:35,250 [INFO] [WORKITEM] 53674854 - pausing to let Work Items render...
+2026-01-12 15:57:44,286 [INFO] [WORKITEMS] 53674854 - collected 1 open work item(s)
+2026-01-12 15:58:26,625 [INFO] [DEBUG] Work item text: 'Open
+Unknown
+Complaints: Glass Damage - Windshield Crack
+Created At: 1/9/2026, 7:26:43 AM
+Estimated Labor Time: 0'
+2026-01-12 15:58:26,916 [INFO] [DEBUG] Text length: 113
+2026-01-12 15:58:27,195 [INFO] [DEBUG] Text repr: 'Open\nUnknown\nComplaints: Glass Damage - Windshield Crack\nCreated At: 1/9/2026, 7:26:43 AM\nEstimated Labor Time: 0'
+2026-01-12 15:58:28,217 [INFO] [DEBUG] Lowercased: 'open
+unknown
+complaints: glass damage - windshield crack
+created at: 1/9/2026, 7:26:43 am
+estimated labor time: 0'
+2026-01-12 15:58:28,764 [INFO] [DEBUG] Contains 'glass': True
+2026-01-12 15:59:03,578 [INFO] [GLASS] Glass damage work item already exists for 53674854
+2026-01-12 16:00:03,522 [INFO] 
+********************************
+MVA 55859495
+********************************
+2026-01-12 16:00:03,811 [INFO] [MVA] Reviewing 55859495 (Type: REPLACEMENT, Location: REAR)
+2026-01-12 16:00:22,779 [INFO] [MVA_INPUT] Field cleared before entering new MVA.
+2026-01-12 16:00:33,130 [INFO] [MVA_INPUT] Entered MVA: 55859495
+2026-01-12 16:00:36,026 [INFO] [MVA_VALIDATION] Waiting for vehicle properties to load for 55859495...
+2026-01-12 16:01:11,491 [WARNING] [MVA_VALIDATION] Vehicle properties not found for 55859495 - MVA may be invalid or non-existent

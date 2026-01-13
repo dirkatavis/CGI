@@ -1,7 +1,7 @@
 # Glass Work Item Strategy Implementation Requirements
 
 ## Overview
-Implementation of flexible work item strategy pattern to handle different glass damage scenarios while maintaining reusability for future work item types (PM, Brake, etc.).
+Implementation of flexible work item handler pattern to handle different glass damage scenarios while maintaining reusability for future work item types (PM, Brake, etc.).
 
 ## Implementation Status: PHASE 1 COMPLETE
 

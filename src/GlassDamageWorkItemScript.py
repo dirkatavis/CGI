@@ -1,10 +1,16 @@
+import sys
+import os
+# Ensure project root is in sys.path for imports
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
 """
 Script to loop through MVAs, check for glass damage work item, log status, and create if missing.
 Uses two-tier logging (per-MVA and error/confirmation logs).
 """
 import time
 from utils.logger import log
-from core.driver_manager import get_or_create_driver
+from core.driver_manager import get_driver, quit_driver
 from config.config_loader import get_config
 from flows.LoginFlow import LoginFlow
 from flows.work_item_flow import get_work_items
@@ -18,35 +24,38 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 
-MVA_CSV = "data/GlassWorkItems.csv"
+MVA_CSV = "data/GlassDamageWorkItemScript.csv"
 
-def read_mva_list(csv_path):
-    """
-    Read glass work items from CSV and return WorkItemConfig objects.
-    
-    Args:
-        csv_path: Path to CSV file with columns: MVA, DamageType, Location
-        
-    Returns:
-        List of WorkItemConfig objects
-    """
-    from flows.work_item_handler import WorkItemConfig
-    
-    configs = []
+
+from flows.work_item_handler import WorkItemConfig
+
+def read_csv_rows(csv_path):
+    """Read rows from CSV, skipping empty and comment rows."""
     with open(csv_path, newline="") as f:
-        reader = csv.DictReader(f)  # Use DictReader to handle headers
-        for row in reader:
-            if not row or not row.get('MVA'):  # Check if MVA column exists and has value
-                continue
-            mva = row['MVA'].strip()
-            if mva and not mva.startswith("#"):  # Skip comments and empty values
-                config = WorkItemConfig(
-                    mva=mva,
-                    damage_type=row.get('DamageType'),
-                    location=row.get('Location')
-                )
-                configs.append(config)
-                log.info(f"[CSV] Loading work item: {config.mva} (DamageType: {config.damage_type}, Location: {config.location})")
+        reader = csv.DictReader(f)
+        return [row for row in reader if row and row.get('MVA') and not row['MVA'].strip().startswith('#')]
+
+def create_work_item_config(row):
+    """Create WorkItemConfig from a CSV row."""
+    mva = row['MVA'].strip()
+    return WorkItemConfig(
+        mva=mva,
+        damage_type=row.get('DamageType'),
+        location=row.get('Location')
+    )
+
+def log_work_item_config(config):
+    """Log details of a WorkItemConfig."""
+    log.info(f"[CSV] Loading work item: {config.mva} (DamageType: {config.damage_type}, Location: {config.location})")
+
+def get_work_item_configs(csv_path):
+    """Read, filter, create, and log WorkItemConfig objects from CSV."""
+    rows = read_csv_rows(csv_path)
+    configs = []
+    for row in rows:
+        config = create_work_item_config(row)
+        configs.append(config)
+        log_work_item_config(config)
     return configs
 
 
@@ -63,7 +72,7 @@ def main():
     username = get_config("username")
     password = get_config("password")
     login_id = get_config("login_id")
-    driver = get_or_create_driver()
+    driver = get_driver()
     mva_input_page = MVAInputPage(driver)
     login_flow = LoginFlow(driver)
     login_result = login_flow.login_handler(username, password, login_id)
@@ -71,7 +80,7 @@ def main():
         log.error(f"[LOGIN] Failed to initialize session → {login_result}")
         return
 
-    mva_list = read_mva_list(MVA_CSV)
+    mva_list = get_work_item_configs(MVA_CSV)
     for work_item_config in mva_list:
         # after finding the first work item type sought we can break out of the loop
         mva = work_item_config.mva
@@ -181,6 +190,13 @@ def main():
                 else:
                     time.sleep(2)
         time.sleep(2)
+
+    # Ensure the browser is closed after all automation is finished
+    try:
+        quit_driver()
+        log.info("[SESSION] Browser closed.")
+    except Exception as e:
+        log.warning(f"[SESSION] Failed to close browser: {e}")
 
 # ----------------------------------------------------------------------------
 # AUTHOR:       Dirk Steele <dirk.avis@mail.com>

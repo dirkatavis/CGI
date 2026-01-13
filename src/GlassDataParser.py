@@ -1,3 +1,9 @@
+import sys
+import os
+# Ensure project root is in sys.path for imports
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
 from selenium.webdriver.common.by import By
 from utils.ui_helpers import find_element
 from selenium.webdriver.support.ui import WebDriverWait
@@ -32,12 +38,12 @@ from flows.LoginFlow import LoginFlow
 from pages.vehicle_properties_page import VehiclePropertiesPage
 from pages.vehicle import Vehicle
 from pages.mva_input_page import MVAInputPage
-from core.driver_manager import get_or_create_driver
+from core.driver_manager import get_driver, quit_driver
 from config.config_loader import get_config
 from utils.logger import log
 
 RESULTS_FILE = "GlassResults.txt"
-MVA_CSV = "data/mva.csv"
+MVA_CSV = "data/GlassDataParser.csv"
 
 
 def read_mva_list(csv_path):
@@ -74,7 +80,7 @@ def main():
     username = get_config("username")
     password = get_config("password")
     login_id = get_config("login_id")
-    driver = get_or_create_driver()
+    driver = get_driver()
     login_flow = LoginFlow(driver)
     login_result = login_flow.login_handler(username, password, login_id)
     if login_result.get("status") != "ok":
@@ -206,7 +212,7 @@ def main():
     except Exception as e:
         log.error(f"[RESULTS][ERROR] Failed to write results file: {e}")
 
-    driver.quit()
+    quit_driver()
 
 if __name__ == "__main__":
     main()

@@ -1,0 +1,58 @@
+2026-01-13 06:49:36,839 [INFO] [DRIVER] Detected Browser=143.0.3650.139, Driver=143.0.3650.80
+2026-01-13 06:49:36,845 [INFO] [DRIVER] Launching Edge - Browser 143.0.3650.139, Driver 143.0.3650.80
+2026-01-13 06:49:42,256 [INFO] [LOGIN_FLOW] Starting login handler.
+2026-01-13 06:49:42,341 [INFO] [NAV] Navigating to Login page - https://avisbudget.palantirfoundry.com/multipass/login
+2026-01-13 06:49:45,203 [WARNING] [NAV] Expected https://avisbudget.palantirfoundry.com/multipass/login, got https://avisbudget.palantirfoundry.com/multipass/automatic-login?realm=e6e04a33-f159-4321-ba01-d0c5cb20214b&collector_type=saml
+2026-01-13 06:49:53,200 [INFO] [LOGIN] Already on workspace page after redirection. Considering logged in.
+2026-01-13 06:50:03,344 [INFO] [LOGIN_FLOW] Microsoft SSO page not detected. Proceeding with standard login flow.
+2026-01-13 06:50:03,405 [INFO] [LOGIN] Clicking Compass Mobile button
+2026-01-13 06:50:03,588 [INFO] [LOGIN] Switched to Compass Mobile tab
+2026-01-13 06:50:06,768 [INFO] [LOGIN] WWID input field detected
+2026-01-13 06:50:06,773 [INFO] [LOGIN] Proceeding to WWID entry
+2026-01-13 06:50:07,173 [INFO] [LOGIN] WWID submitted via button
+2026-01-13 06:50:07,319 [INFO] [MVA_INPUT][WORKAROUND] Queried dummy MVA: 50227203
+2026-01-13 06:50:41,209 [INFO] [MVA_INPUT] Field cleared before entering new MVA.
+2026-01-13 06:50:41,349 [INFO] [MVA_INPUT] Entered MVA: 51983632
+2026-01-13 06:50:45,085 [INFO] [MVA][WAIT] UI echoed MVA 51983632
+2026-01-13 06:50:46,051 [INFO] [MVA_INPUT] Field cleared before entering new MVA.
+2026-01-13 06:50:46,199 [INFO] [MVA_INPUT] Entered MVA: 55945341
+2026-01-13 06:50:49,946 [INFO] [MVA][WAIT] UI echoed MVA 55945341
+2026-01-13 06:50:50,993 [INFO] [MVA_INPUT] Field cleared before entering new MVA.
+2026-01-13 06:50:51,112 [INFO] [MVA_INPUT] Entered MVA: 59683002
+2026-01-13 06:50:54,865 [INFO] [MVA][WAIT] UI echoed MVA 59683002
+2026-01-13 06:50:55,925 [INFO] [MVA_INPUT] Field cleared before entering new MVA.
+2026-01-13 06:50:56,092 [INFO] [MVA_INPUT] Entered MVA: 58377874
+2026-01-13 06:50:59,913 [INFO] [MVA][WAIT] UI echoed MVA 58377874
+2026-01-13 06:51:00,950 [INFO] [MVA_INPUT] Field cleared before entering new MVA.
+2026-01-13 06:51:01,068 [INFO] [MVA_INPUT] Entered MVA: 53674854
+2026-01-13 06:51:04,782 [INFO] [MVA][WAIT] UI echoed MVA 53674854
+2026-01-13 06:51:05,773 [INFO] [MVA_INPUT] Field cleared before entering new MVA.
+2026-01-13 06:51:05,878 [INFO] [MVA_INPUT] Entered MVA: 58575510
+2026-01-13 06:51:09,573 [INFO] [MVA][WAIT] UI echoed MVA 58575510
+2026-01-13 06:51:09,574 [INFO] [RESULTS] Writing results to: C:\Temp\Code\Scripts\py\cgi\GetGlassInfo\GlassResults.txt
+2026-01-13 06:51:09,578 [INFO] [RESULTS] Results file written: C:\Temp\Code\Scripts\py\cgi\GetGlassInfo\GlassResults.txt
+2026-01-13 09:31:56,522 [INFO] [DRIVER] Detected Browser=143.0.3650.139, Driver=143.0.3650.80
+2026-01-13 09:31:56,522 [INFO] [DRIVER] Launching Edge - Browser 143.0.3650.139, Driver 143.0.3650.80
+2026-01-13 09:32:00,986 [INFO] [LOGIN_FLOW] Starting login handler.
+2026-01-13 09:32:01,034 [INFO] [NAV] Navigating to Login page - https://avisbudget.palantirfoundry.com/multipass/login
+2026-01-13 09:32:02,857 [WARNING] [NAV] Expected https://avisbudget.palantirfoundry.com/multipass/login, got https://avisbudget.palantirfoundry.com/multipass/automatic-login?realm=e6e04a33-f159-4321-ba01-d0c5cb20214b&collector_type=saml
+2026-01-13 09:32:10,133 [INFO] [LOGIN] Already on workspace page after redirection. Considering logged in.
+2026-01-13 09:32:20,330 [INFO] [LOGIN_FLOW] Microsoft SSO page not detected. Proceeding with standard login flow.
+2026-01-13 09:32:20,379 [INFO] [LOGIN] Clicking Compass Mobile button
+2026-01-13 09:32:20,627 [INFO] [LOGIN] Switched to Compass Mobile tab
+2026-01-13 09:32:24,397 [INFO] [LOGIN] WWID input field detected
+2026-01-13 09:32:24,398 [INFO] [LOGIN] Proceeding to WWID entry
+2026-01-13 09:32:24,632 [INFO] [LOGIN] WWID submitted via button
+2026-01-13 09:32:24,764 [INFO] [MVA_INPUT][WORKAROUND] Queried dummy MVA: 50227203
+2026-01-13 09:32:58,535 [INFO] [MVA_INPUT] Field cleared before entering new MVA.
+2026-01-13 09:32:58,641 [INFO] [MVA_INPUT] Entered MVA: 59193750
+2026-01-13 09:33:02,343 [INFO] [MVA][WAIT] UI echoed MVA 59193750
+2026-01-13 09:33:03,453 [INFO] [MVA_INPUT] Field cleared before entering new MVA.
+2026-01-13 09:33:03,547 [INFO] [MVA_INPUT] Entered MVA: 87654321
+2026-01-13 09:33:40,516 [ERROR] [MVA][ERROR] echoed value not found (looked for last8='{last8}')
+2026-01-13 09:33:45,134 [ERROR] [MVA][ERROR] echoed value not found (looked for last8='{last8}')
+2026-01-13 09:33:49,752 [ERROR] [MVA][ERROR] echoed value not found (looked for last8='{last8}')
+2026-01-13 09:33:49,752 [WARNING] [MVA][WAIT] UI did not echo MVA 87654321 in time; results may be stale.
+2026-01-13 09:33:49,753 [INFO] [RESULTS] Writing results to: C:\Temp\Code\Scripts\py\cgi\GetGlassInfo\GlassResults.txt
+2026-01-13 09:33:49,755 [INFO] [RESULTS] Results file written: C:\Temp\Code\Scripts\py\cgi\GetGlassInfo\GlassResults.txt
+2026-01-13 09:33:49,756 [INFO] [DRIVER] Quitting Edge WebDriver...

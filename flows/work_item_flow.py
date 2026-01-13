@@ -13,7 +13,9 @@ def get_work_items(driver, mva: str):
     """Collect all open glass work items for the given MVA."""
     log.debug(f"[WORKITEM] {mva} - Getting work items.")
     log.info(f"[WORKITEM] {mva} - pausing to let Work Items render...")
-    time.sleep(9)  # wait for UI to render
+    #time.sleep(9)  # wait for UI to render
+    # Better: wait for the work items container to be present
+    safe_wait(driver, 15, EC.presence_of_element_located((By.XPATH, "//div[contains(@class, 'fleet-operations-pwa__scan-record__')]")), desc="Work Items container")
     try:
         # Check for 'No work items yet...' message
         no_items = driver.find_elements(By.XPATH, "//div[contains(@class, 'bp6-entity-title-title') and contains(text(), 'No work items yet')]")
@@ -109,6 +111,7 @@ def create_work_item_with_handler(driver, config, handler_type: str = "GLASS"):
         # Create appropriate handler
         handler = create_work_item_handler(handler_type, driver)
         # Execute work item creation using handler
+        # 
         return handler.create_work_item(config)
     except Exception as e:
         log.error(f"[WORKITEM][ERROR] {config.mva} - Handler execution failed: {e}")

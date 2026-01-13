@@ -1,3 +1,109 @@
+# --- Workflow Step Functions ---
+def click_add_work_item(driver):
+    """Click the Add Work Item button on the main screen."""
+    try:
+        log.info("[STEP] Clicking Add Work Item button...")
+        # Use the provided class name to locate the button
+        button = driver.find_element(By.CLASS_NAME, "fleet-operations-pwa__create-item-button__1k9soug")
+        button.click()
+        log.info("[STEP] Successfully clicked Add Work Item button.")
+        return True
+    except Exception as e:
+        log.error(f"[STEP][ERROR] Failed to click Add Work Item: {e}")
+        return False
+
+def click_add_new_complaint(driver):
+    """Click the Add New Complaint button on the complaint screen."""
+    try:
+        log.info("[STEP] Clicking Add New Complaint button...")
+        # Use the provided class name to locate the button
+        button = driver.find_element(By.CLASS_NAME, "fleet-operations-pwa__nextButton__5dy90n")
+        button.click()
+        log.info("[STEP] Successfully clicked Add New Complaint button.")
+        return True
+    except Exception as e:
+        log.error(f"[STEP][ERROR] Failed to click Add New Complaint: {e}")
+        return False
+
+def handle_drivability_screen(driver, answer_yes=True):
+    """Click Yes/No on the Drivability screen."""
+    try:
+        log.info(f"[STEP] Clicking {'Yes' if answer_yes else 'No'} on Drivability screen...")
+        # Find all drivable option buttons by class name
+        buttons = driver.find_elements(By.CLASS_NAME, "fleet-operations-pwa__drivable-option-button__yzn7ir")
+        if not buttons or len(buttons) < 2:
+            raise Exception("Drivability option buttons not found or insufficient buttons present.")
+        # Yes is the first button, No is the second
+        target_button = buttons[0] if answer_yes else buttons[1]
+        target_button.click()
+        log.info(f"[STEP] Successfully clicked {'Yes' if answer_yes else 'No'} on Drivability screen.")
+        return True
+    except Exception as e:
+        log.error(f"[STEP][ERROR] Failed on Drivability screen: {e}")
+        return False
+
+def select_complaint_type_glass(driver):
+    """Select Glass Damage on Complaint Type screen."""
+    try:
+        log.info("[STEP] Selecting Glass Damage complaint type...")
+        return True
+    except Exception as e:
+        log.error(f"[STEP][ERROR] Failed to select Glass Damage: {e}")
+        return False
+
+def select_glass_damage_type(driver, damage_type):
+    """Select the specific glass damage type (crack/chip/side/rear)."""
+    try:
+        log.info(f"[STEP] Selecting glass damage type: {damage_type}...")
+        return True
+    except Exception as e:
+        log.error(f"[STEP][ERROR] Failed to select glass damage type: {e}")
+        return False
+
+def submit_complaint(driver):
+    """Click Submit Complaint button."""
+    try:
+        log.info("[STEP] Submitting complaint...")
+        return True
+    except Exception as e:
+        log.error(f"[STEP][ERROR] Failed to submit complaint: {e}")
+        return False
+
+def click_next_on_mileage(driver):
+    """Click Next on the Mileage screen."""
+    try:
+        log.info("[STEP] Clicking Next on Mileage screen...")
+        return True
+    except Exception as e:
+        log.error(f"[STEP][ERROR] Failed to click Next on Mileage: {e}")
+        return False
+
+def select_opcode_glass(driver):
+    """Select 'Glass Repair/Replace' on OpsCode screen."""
+    try:
+        log.info("[STEP] Selecting Glass Repair/Replace opcode...")
+        return True
+    except Exception as e:
+        log.error(f"[STEP][ERROR] Failed to select opcode: {e}")
+        return False
+
+def click_create_work_item(driver):
+    """Click Create Work Item button on OpsCode screen."""
+    try:
+        log.info("[STEP] Clicking Create Work Item button...")
+        return True
+    except Exception as e:
+        log.error(f"[STEP][ERROR] Failed to click Create Work Item: {e}")
+        return False
+
+def click_done_on_work_item(driver):
+    """Click Done button on Work Item screen."""
+    try:
+        log.info("[STEP] Clicking Done button on Work Item screen...")
+        return True
+    except Exception as e:
+        log.error(f"[STEP][ERROR] Failed to click Done: {e}")
+        return False
 import sys
 import os
 # Ensure project root is in sys.path for imports
@@ -175,9 +281,11 @@ def main():
                     break  # No need to create a new work item, exit retry loop
 
                 # If there are work items but none are glass, or if there are no work items at all, create new glass work item
-                log.info(f"[GLASS] No active glass damage work item found for {mva}, creating new work item...")
-                from flows.work_item_flow import create_work_item_with_strategy
-                result = create_work_item_with_strategy(driver, work_item_config, strategy_type="GLASS")
+                
+                #import pdb; pdb.set_trace()  # DEBUG: Breakpoint before waiting for vehicle properties
+                #This was renamed to create_work_item_handler in work_item_flow.py
+                from flows.work_item_flow import create_work_item_with_handler
+                result = create_work_item_with_handler(driver, work_item_config, handler_type="GLASS")
                 if result.get("status") == "created":
                     log.info(f"[GLASS] Glass damage work item created for {mva}")
                 else:
@@ -209,3 +317,94 @@ def main():
 
 if __name__ == "__main__":
     main()
+def select_glass_damage_option(driver, option_text="Glass Damage"):
+    """
+    Selects a glass damage option by visible text (e.g., 'Windshield Crack', 'Windshield Chip', 'Side/Rear Window Damage').
+    Args:
+        driver: Selenium WebDriver instance
+        option_text: The visible text of the glass damage option to select
+    Returns:
+        True if the option was found and clicked, False otherwise
+    """
+    try:
+        log.info(f"[STEP] Selecting glass damage option: '{option_text}' ...")
+        # Find all damage option buttons by class name
+        buttons = driver.find_elements(By.CLASS_NAME, "fleet-operations-pwa__damage-option-button__yzn7ir")
+        if not buttons:
+            raise Exception("No damage option buttons found.")
+        for button in buttons:
+            try:
+                # The button text is inside a <h1> tag within the button
+                h1 = button.find_element(By.TAG_NAME, "h1")
+                text = h1.text.strip()
+                if text == option_text:
+                    button.click()
+                    log.info(f"[STEP] Successfully clicked '{option_text}' option.")
+                    return True
+            except Exception:
+                continue
+        raise Exception(f"'{option_text}' option not found among buttons.")
+    except Exception as e:
+        log.error(f"[STEP][ERROR] Failed to select glass damage option '{option_text}': {e}")
+        return False
+
+def click_submit_complaint(driver):
+    """
+    Clicks the 'Submit Complaint' button on the page.
+    Args:
+        driver: Selenium WebDriver instance
+    Returns:
+        True if the button was found and clicked, False otherwise
+    """
+    try:
+        log.info("[STEP] Clicking 'Submit Complaint' button ...")
+        # Find all submit buttons by class name
+        buttons = driver.find_elements(By.CLASS_NAME, "fleet-operations-pwa__submit-button__yzn7ir")
+        if not buttons:
+            raise Exception("No submit buttons found.")
+        for button in buttons:
+            try:
+                # The button text is inside a <span> tag within the button
+                span = button.find_element(By.TAG_NAME, "span")
+                text = span.text.strip()
+                if text == "Submit Complaint":
+                    button.click()
+                    log.info("[STEP] Successfully clicked 'Submit Complaint' button.")
+                    return True
+            except Exception:
+                continue
+        raise Exception("'Submit Complaint' button not found among buttons.")
+    except Exception as e:
+        log.error(f"[STEP][ERROR] Failed to click 'Submit Complaint' button: {e}")
+        return False
+
+def click_mileage_next(driver):
+    """
+    Clicks the 'Next' button on the Mileage screen.
+    Args:
+        driver: Selenium WebDriver instance
+    Returns:
+        True if the button was found and clicked, False otherwise
+    """
+    try:
+        log.info("[STEP] Clicking 'Next' button on Mileage screen ...")
+        # Find all next buttons by class name
+        buttons = driver.find_elements(By.CLASS_NAME, "fleet-operations-pwa__nextButton__5dy90n")
+        if not buttons:
+            raise Exception("No 'Next' buttons found on Mileage screen.")
+        for button in buttons:
+            try:
+                # The button text is inside a <p> tag within a <span> inside the button
+                span = button.find_element(By.TAG_NAME, "span")
+                p = span.find_element(By.TAG_NAME, "p")
+                text = p.text.strip()
+                if text == "Next":
+                    button.click()
+                    log.info("[STEP] Successfully clicked 'Next' button on Mileage screen.")
+                    return True
+            except Exception:
+                continue
+        raise Exception("'Next' button not found among buttons on Mileage screen.")
+    except Exception as e:
+        log.error(f"[STEP][ERROR] Failed to click 'Next' button on Mileage screen: {e}")
+        return False

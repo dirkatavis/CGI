@@ -121,19 +121,41 @@ class WorkItemHandler(ABC):
 
 class GlassWorkItemHandler(WorkItemHandler):
     """Handler for Glass damage work items."""
-    # UI text mappings for glass damage types (captured from actual UI)
-    DAMAGE_TYPE_MAPPINGS = {
-        "REPLACEMENT": "Replace",  # TODO: Capture exact UI text during iteration
-        "CRACK": "Crack",         # TODO: Capture exact UI text during iteration  
-        "CHIP": "Chip"            # TODO: Capture exact UI text during iteration
+    # UI button text for glass damage types
+    DAMAGE_TYPE_UI = {
+        ("REPLACEMENT", "FRONT"): "Windshield Crack",
+        ("REPLACEMENT", "WINDSHIELD"): "Windshield Crack",
+        ("REPLACEMENT", "SIDE"): "Side/Rear Window Damage",
+        ("REPLACEMENT", "REAR"): "Side/Rear Window Damage",
+        ("REPLACEMENT", "TOP"): "Side/Rear Window Damage",
+        ("REPLACEMENT", "BACK"): "Side/Rear Window Damage",
+        ("REPLACEMENT", "UNKNOWN"): "I don't know",
+        ("REPAIR", "FRONT"): "Windshield Chip",
+        ("REPAIR", "WINDSHIELD"): "Windshield Chip",
+        ("REPAIR", "CHIP"): "Windshield Chip",
+        ("REPAIR", "SIDE"): "Side/Rear Window Damage",
+        ("REPAIR", "REAR"): "Side/Rear Window Damage",
+        ("REPAIR", "TOP"): "Side/Rear Window Damage",
+        ("REPAIR", "BACK"): "Side/Rear Window Damage",
+        ("REPAIR", "UNKNOWN"): "I don't know",
     }
-    
-    # UI text mappings for glass locations (captured from actual UI)
-    LOCATION_MAPPINGS = {
-        "WINDSHIELD": "Windshield",  # TODO: Capture exact UI text during iteration
-        "REAR": "Rear",              # TODO: Capture exact UI text during iteration
-        "SIDE": "Side"               # TODO: Capture exact UI text during iteration
-    }
+    # Only the front (WINDSHIELD/FRONT/CHIP) can have a chip; all other locations map to Side/Rear Window Damage for repair/chip
+    def map_damage_type_to_ui(self, damage_type, location):
+        dt = (damage_type or "REPLACEMENT").strip().upper()
+        loc = (location or "UNKNOWN").strip().upper()
+        # Chip/repair only allowed for front/windshield
+        if dt in ("REPAIR", "CHIP"):
+            if loc in ("FRONT", "WINDSHIELD", "CHIP"):
+                return "Windshield Chip"
+            else:
+                return "Side/Rear Window Damage"
+        return self.DAMAGE_TYPE_UI.get((dt, loc), self.DAMAGE_TYPE_UI.get((dt, "UNKNOWN"), "I don't know"))
+
+    def map_damage_type_to_ui(self, damage_type, location):
+        dt = (damage_type or "REPLACEMENT").strip().upper()
+        loc = (location or "UNKNOWN").strip().upper()
+        # Prefer exact match, fallback to 'UNKNOWN' if not found
+        return self.DAMAGE_TYPE_UI.get((dt, loc), self.DAMAGE_TYPE_UI.get((dt, "UNKNOWN"), "I don't know"))
     
     def get_work_item_type(self) -> str:
         """Return the work item type identifier."""
@@ -158,15 +180,12 @@ class GlassWorkItemHandler(WorkItemHandler):
     # ----------------------------------------------------------------------------
     def create_new_complaint(self, config: WorkItemConfig) -> Dict[str, Any]:
         from flows.complaints_flows import create_new_complaint
-        # For now, delegate to existing create_new_complaint with glass type
-        # TODO: Update create_new_complaint to accept damage_type and location parameters
-        result = create_new_complaint(self.driver, config.mva, complaint_type="glass")
+        # Map CSV damage type/location to UI button text
+        damage_type_ui = self.map_damage_type_to_ui(config.damage_type, config.location)
+        log.info(f"[GLASS] {config.mva} - Selecting UI damage type: {damage_type_ui}")
+        result = create_new_complaint(self.driver, config.mva, complaint_type=damage_type_ui)
         if result.get("status") == "created":
             log.info(f"[GLASS] {config.mva} - New glass complaint created")
-            # TODO: Add damage type and location selection logic here
-            # This will need to interact with the glass complaint UI to select:
-            # - Damage type from config.damage_type using DAMAGE_TYPE_MAPPINGS
-            # - Location from config.location using LOCATION_MAPPINGS
         return result
     
     # ----------------------------------------------------------------------------

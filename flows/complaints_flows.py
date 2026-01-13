@@ -9,6 +9,7 @@ from selenium.common.exceptions import NoSuchElementException
 from utils.ui_helpers import click_element
 from flows.opcode_flows import select_opcode    
 from flows.mileage_flows import complete_mileage_dialog
+from core.complaint_types import ComplaintType, GlassDamageType
 
 
 
@@ -199,6 +200,7 @@ def create_new_complaint(driver, mva: str, complaint_type: str = "glass") -> dic
             log.warning(f"[GLASS][COMPLAINT][NEW][WARN] {mva} - could not click Add/Create New Complaint")
             return {"status": "failed", "reason": "add_btn"}
         log.info(f"[GLASS][COMPLAINT][NEW] {mva} - Add/Create New Complaint clicked")
+        #Need to replace sleep with wait for <ex
         time.sleep(2)
 
         # 2. Handle Drivability (Yes/No). Simplest case -> always Yes
@@ -208,20 +210,53 @@ def create_new_complaint(driver, mva: str, complaint_type: str = "glass") -> dic
         log.info(f"[GLASS][COMPLAINT][NEW] {mva} - Drivability Yes clicked")
         time.sleep(1)
 
-        # 3) Complaint Type = Glass (auto-advances, no Next button here)
-        if click_element(driver, (By.XPATH, "//button[normalize-space()='Glass']")):
-            log.info(f"[GLASS][COMPLAINT] {mva} - Complaint type 'Glass' selected")
+        # 3) Select Complaint Type: always click 'Glass Damage' first, then select specific damage type using enums
+        # Step 1: Click 'Glass Damage' complaint type (using enum)
+        glass_damage_label = ComplaintType.GLASS_DAMAGE.value
+        if not click_element(driver, (By.XPATH, f"//button[normalize-space()='{glass_damage_label}']"), timeout=10, desc="Glass Damage complaint type"):
+            log.warning(f"[GLASS][COMPLAINT][WARN] {mva} - Complaint type '{glass_damage_label}' not found")
+            return {"status": "failed", "reason": "complaint_type", "mva": mva}
+        log.info(f"[GLASS][COMPLAINT] {mva} - Complaint type '{glass_damage_label}' selected")
+        time.sleep(2)
+
+        # Step 2: Select specific glass damage type (using enum)
+        # complaint_type may be a string or GlassDamageType; normalize to enum if possible
+        damage_type = complaint_type
+        if not isinstance(damage_type, GlassDamageType):
+            try:
+                damage_type = GlassDamageType(damage_type)
+            except Exception:
+                log.warning(f"[GLASS][COMPLAINT][WARN] {mva} - Unknown glass damage type '{damage_type}', defaulting to UNKNOWN")
+                damage_type = GlassDamageType.UNKNOWN
+        damage_label = damage_type.value
+        damage_btn_xpath = f"//button[.//h1[text()='{damage_label}']]"
+        if click_element(driver, (By.XPATH, damage_btn_xpath), timeout=10, desc=f"Glass Damage Type: {damage_label}"):
+            log.info(f"[GLASS][COMPLAINT] {mva} - Glass damage type '{damage_label}' selected")
             time.sleep(2)  # allow auto-advance to Additional Info screen
         else:
-            log.warning(f"[GLASS][COMPLAINT][WARN] {mva} - Complaint type 'Glass' not found")
-            return {"status": "failed", "reason": "complaint_type", "mva": mva}
+            log.warning(f"[GLASS][COMPLAINT][WARN] {mva} - Glass damage type '{damage_label}' not found")
+            # Diagnostic: log page source
+            try:
+                log.error(driver.page_source)
+                driver.save_screenshot(f"glass_damage_type_error_{mva}.png")
+                log.info(f"Saved screenshot to glass_damage_type_error_{mva}.png")
+            except Exception as se:
+                log.error(f"Failed to save screenshot: {se}")
+            return {"status": "failed", "reason": "glass_damage_type", "mva": mva}
 
-        # 4) Additional Info screen -> Submit
-        if click_element(driver, (By.XPATH, "//button[normalize-space()='Submit Complaint']")):
+        # 4) Additional Info screen -> Submit (robust)
+        submit_btn_xpath = "//button[contains(., 'Submit Complaint') or contains(., 'Submit')]"
+        if click_element(driver, (By.XPATH, submit_btn_xpath), timeout=20, desc="Submit Complaint"):
             log.info(f"[GLASS][COMPLAINT] {mva} - Additional Info submitted")
             time.sleep(2)
         else:
             log.warning(f"[GLASS][COMPLAINT][WARN] {mva} - could not submit Additional Info")
+            try:
+                log.error(driver.page_source)
+                driver.save_screenshot(f"submit_complaint_error_{mva}.png")
+                log.info(f"Saved screenshot to submit_complaint_error_{mva}.png")
+            except Exception as se:
+                log.error(f"Failed to save screenshot: {se}")
             return {"status": "failed", "reason": "submit_info", "mva": mva}
 
         return {"status": "created"}

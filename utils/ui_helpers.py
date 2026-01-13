@@ -1,3 +1,16 @@
+
+# --- Imports ---
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
+from utils.logger import log
+
+"""
+UI Helper utilities for Selenium interactions.
+
+Provides common helper functions for finding elements, clicking, sending text, etc.
+"""
+
 def navigate_back_to_home(driver):
     """
     Placeholder for navigation logic to return to the home page in the UI.
@@ -5,6 +18,7 @@ def navigate_back_to_home(driver):
     log.info("[NAV] Navigating back to home (stub function called)")
     # TODO: Implement actual navigation logic as needed
     pass
+
 def find_elements(driver, locator, timeout=10):
     """
     Find all elements matching the locator within the timeout.
@@ -26,17 +40,6 @@ def find_elements(driver, locator, timeout=10):
     except Exception as e:
         log.error(f"Error finding elements {locator}: {e}")
         return []
-"""
-UI Helper utilities for Selenium interactions.
-
-Provides common helper functions for finding elements, clicking, sending text, etc.
-"""
-
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException, NoSuchElementException
-
-from utils.logger import log
 
 
 def safe_wait(driver, timeout, condition, desc="element"):

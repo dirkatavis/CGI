@@ -81,19 +81,13 @@ def create_driver():
         log.error(f"[DRIVER] Session creation failed: {e}")
         raise
 
+
 def get_driver():
     """Return the existing Edge WebDriver, or raise error if not created."""
     global _driver
     if not _driver:
         raise RuntimeError("WebDriver does not exist. Call create_driver() first.")
     return _driver
-
-def get_driver():
-    """Return singleton Edge WebDriver, creating it if needed."""
-    global _driver
-    if _driver:
-        return _driver
-    return create_driver()
 
 
 def quit_driver():

@@ -1,3 +1,26 @@
+# --- Imports ---
+import sys
+import os
+import time
+import csv
+from utils.logger import log
+from core.driver_manager import get_driver, quit_driver
+from config.config_loader import get_config
+from flows.LoginFlow import LoginFlow
+from flows.work_item_flow import get_work_items
+from flows.complaints_flows import detect_existing_complaints, handle_new_complaint
+from pages.work_item import WorkItem
+from pages.mva_input_page import MVAInputPage
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
+
+# Ensure project root is in sys.path for imports
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+
 # --- Workflow Step Functions ---
 def click_add_work_item(driver):
     """Click the Add Work Item button on the main screen."""
@@ -104,31 +127,6 @@ def click_done_on_work_item(driver):
     except Exception as e:
         log.error(f"[STEP][ERROR] Failed to click Done: {e}")
         return False
-import sys
-import os
-# Ensure project root is in sys.path for imports
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-if PROJECT_ROOT not in sys.path:
-    sys.path.insert(0, PROJECT_ROOT)
-"""
-Script to loop through MVAs, check for glass damage work item, log status, and create if missing.
-Uses two-tier logging (per-MVA and error/confirmation logs).
-"""
-import time
-from utils.logger import log
-from core.driver_manager import get_driver, quit_driver
-from config.config_loader import get_config
-from flows.LoginFlow import LoginFlow
-from flows.work_item_flow import get_work_items
-from flows.complaints_flows import detect_existing_complaints, handle_new_complaint
-from pages.work_item import WorkItem
-from selenium.common.exceptions import NoSuchElementException
-import csv
-from pages.mva_input_page import MVAInputPage
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
-from selenium.webdriver.common.by import By
 
 MVA_CSV = "data/GlassDamageWorkItemScript.csv"
 
@@ -262,6 +260,7 @@ def main():
                     break  # Skip to next MVA
 
                 # Additional wait for work items to update after vehicle properties load
+                # Convert this to a wait for the work items container instead of a fixed sleep
                 time.sleep(2)
                 work_items = get_work_items(driver, mva)
                 # Only proceed if there are no glass work items

@@ -150,12 +150,6 @@ class GlassWorkItemHandler(WorkItemHandler):
             else:
                 return "Side/Rear Window Damage"
         return self.DAMAGE_TYPE_UI.get((dt, loc), self.DAMAGE_TYPE_UI.get((dt, "UNKNOWN"), "I don't know"))
-
-    def map_damage_type_to_ui(self, damage_type, location):
-        dt = (damage_type or "REPLACEMENT").strip().upper()
-        loc = (location or "UNKNOWN").strip().upper()
-        # Prefer exact match, fallback to 'UNKNOWN' if not found
-        return self.DAMAGE_TYPE_UI.get((dt, loc), self.DAMAGE_TYPE_UI.get((dt, "UNKNOWN"), "I don't know"))
     
     def get_work_item_type(self) -> str:
         """Return the work item type identifier."""

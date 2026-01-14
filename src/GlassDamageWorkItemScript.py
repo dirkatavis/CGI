@@ -9,6 +9,8 @@ from config.config_loader import get_config
 from flows.LoginFlow import LoginFlow
 from flows.work_item_flow import get_work_items
 from flows.complaints_flows import detect_existing_complaints, handle_new_complaint
+from flows.work_item_strategy import WorkItemConfig
+from core.complaint_types import ComplaintType, GlassDamageType
 from pages.work_item import WorkItem
 from pages.mva_input_page import MVAInputPage
 from utils.ui_helpers import navigate_back_to_home
@@ -16,6 +18,7 @@ from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
+import selenium.webdriver.common.keys as Keys
 
 # Ensure project root is in sys.path for imports
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -67,49 +70,64 @@ def handle_drivability_screen(driver, answer_yes=True):
         return False
 
 def select_complaint_type_glass(driver):
-    """Select Glass Damage on Complaint Type screen."""
-    try:
-        log.info("[STEP] Selecting Glass Damage complaint type...")
-        return True
-    except Exception as e:
-        log.error(f"[STEP][ERROR] Failed to select Glass Damage: {e}")
-        return False
+    """Select Glass Damage on Complaint Type screen using enum value.
+    
+    TODO: Implement actual UI interaction to select glass damage complaint type.
+    This function currently serves as a placeholder.
+    """
+    complaint_type = ComplaintType.GLASS_DAMAGE.value  # "Glass Damage"
+    log.error(f"[TODO] select_complaint_type_glass not implemented - would select {complaint_type}")
+    raise NotImplementedError(f"Function select_complaint_type_glass needs implementation to select {complaint_type}")
 
 def select_glass_damage_type(driver, damage_type):
-    """Select the specific glass damage type (crack/chip/side/rear)."""
-    try:
-        log.info(f"[STEP] Selecting glass damage type: {damage_type}...")
-        return True
-    except Exception as e:
-        log.error(f"[STEP][ERROR] Failed to select glass damage type: {e}")
-        return False
+    """Select the specific glass damage type using enum value or string mapping.
+    
+    TODO: Implement actual UI interaction to select specific glass damage type.
+    This function currently serves as a placeholder.
+    """
+    # If damage_type is already an enum value, use it directly
+    # If it's a string, try to map it to an enum
+    if damage_type in [gdt.value for gdt in GlassDamageType]:
+        glass_type_label = damage_type
+    else:
+        # Fallback mapping for legacy strings
+        damage_mapping = {
+            'REPLACEMENT': GlassDamageType.WINDSHIELD_CRACK.value,
+            'REPAIR': GlassDamageType.WINDSHIELD_CHIP.value,
+            'WINDSHIELD': GlassDamageType.WINDSHIELD_CRACK.value,
+            'FRONT': GlassDamageType.WINDSHIELD_CRACK.value,
+        }
+        glass_type_label = damage_mapping.get(damage_type.upper(), GlassDamageType.UNKNOWN.value)
+    
+    log.error(f"[TODO] select_glass_damage_type not implemented - would select {glass_type_label}")
+    raise NotImplementedError(f"Function select_glass_damage_type needs implementation to select {glass_type_label}")
 
 def submit_complaint(driver):
-    """Click Submit Complaint button."""
-    try:
-        log.info("[STEP] Submitting complaint...")
-        return True
-    except Exception as e:
-        log.error(f"[STEP][ERROR] Failed to submit complaint: {e}")
-        return False
+    """Click Submit Complaint button.
+    
+    TODO: Implement actual UI interaction to submit complaint form.
+    This function currently serves as a placeholder.
+    """
+    log.error("[TODO] submit_complaint not implemented - would click Submit Complaint button")
+    raise NotImplementedError("Function submit_complaint needs implementation to click Submit Complaint button")
 
 def click_next_on_mileage(driver):
-    """Click Next on the Mileage screen."""
-    try:
-        log.info("[STEP] Clicking Next on Mileage screen...")
-        return True
-    except Exception as e:
-        log.error(f"[STEP][ERROR] Failed to click Next on Mileage: {e}")
-        return False
+    """Click Next on the Mileage screen.
+    
+    TODO: Implement actual UI interaction to click Next button on mileage screen.
+    This function currently serves as a placeholder.
+    """
+    log.error("[TODO] click_next_on_mileage not implemented - would click Next on Mileage screen")
+    raise NotImplementedError("Function click_next_on_mileage needs implementation to click Next button")
 
 def select_opcode_glass(driver):
-    """Select 'Glass Repair/Replace' on OpsCode screen."""
-    try:
-        log.info("[STEP] Selecting Glass Repair/Replace opcode...")
-        return True
-    except Exception as e:
-        log.error(f"[STEP][ERROR] Failed to select opcode: {e}")
-        return False
+    """Select 'Glass Repair/Replace' on OpsCode screen.
+    
+    TODO: Implement actual UI interaction to select Glass Repair/Replace opcode.
+    This function currently serves as a placeholder.
+    """
+    log.error("[TODO] select_opcode_glass not implemented - would select Glass Repair/Replace opcode")
+    raise NotImplementedError("Function select_opcode_glass needs implementation to select Glass Repair/Replace opcode")
 
 def click_create_work_item(driver):
     """Click Create Work Item button on OpsCode screen."""
@@ -129,10 +147,86 @@ def click_done_on_work_item(driver):
         log.error(f"[STEP][ERROR] Failed to click Done: {e}")
         return False
 
+# --- Helper Functions for MVA Input Operations ---
+
+def find_mva_input_field(mva_input_page, mva, attempt, max_attempts):
+    """Find and validate the MVA input field with retries.
+    
+    Returns:
+        WebElement: The input field if found and valid, None otherwise
+    """
+    input_field = mva_input_page.find_input()
+    if not (input_field and input_field.is_enabled() and input_field.is_displayed()):
+        try:
+            input_field = WebDriverWait(mva_input_page.driver, 5, poll_frequency=0.25).until(
+                lambda d: (
+                    (f := mva_input_page.find_input()) and f.is_enabled() and f.is_displayed() and f
+                )
+            )
+        except TimeoutException:
+            input_field = None
+    
+    if not input_field:
+        log.error(f"[MVA][FATAL] Could not find MVA input field for {mva}. Attempt {attempt}/{max_attempts}.")
+        if attempt == max_attempts:
+            log.error(f"[MVA][FATAL] Skipping {mva} after {max_attempts} attempts.")
+        return None
+    
+    return input_field
+
+def clear_and_enter_mva(input_field, mva):
+    """Clear the input field thoroughly and enter the new MVA value.
+    
+    Args:
+        input_field: WebElement for the MVA input field
+        mva: String value to enter
+        
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    try:
+        # Clear the field using multiple methods for robustness
+        for _ in range(3):
+            input_field.send_keys(Keys.Keys.CONTROL + 'a')
+            input_field.send_keys(Keys.Keys.DELETE)
+            input_field.clear()
+            time.sleep(0.2)
+        
+        # Wait up to 1s (4 x 250ms) for the field to be empty
+        for _ in range(4):
+            if input_field.get_attribute("value") == "":
+                break
+            time.sleep(0.25)
+        else:
+            log.warning(f"[MVA_INPUT] Field not empty after clearing attempts!")
+        
+        # Wait up to 3 seconds for the field to be empty
+        for _ in range(15):
+            if input_field.get_attribute("value") == "":
+                break
+            time.sleep(0.2)
+        
+        if input_field.get_attribute("value") != "":
+            log.warning(f"[MVA_INPUT] Field not fully cleared before entering new MVA!")
+            return False
+        else:
+            log.info(f"[MVA_INPUT] Field cleared before entering new MVA.")
+        
+        # Enter the new MVA value
+        input_field.send_keys(mva)
+        log.info(f"[MVA_INPUT] Entered MVA: {mva}")
+        return True
+        
+    except Exception as e:
+        log.error(f"[MVA_INPUT] Error during clear and enter operation: {e}")
+        return False
+
+# --- Main Script Configuration ---
+
 MVA_CSV = "data/GlassDamageWorkItemScript.csv"
 
 
-from flows.work_item_handler import WorkItemConfig
+
 
 def read_csv_rows(csv_path):
     """Read rows from CSV, skipping empty and comment rows."""
@@ -141,200 +235,34 @@ def read_csv_rows(csv_path):
         return [row for row in reader if row and row.get('MVA') and not row['MVA'].strip().startswith('#')]
 
 def create_work_item_config(row):
-    """Create WorkItemConfig from a CSV row."""
+    """Create WorkItemConfig from a CSV row with proper enum mapping."""
     mva = row['MVA'].strip()
+    
+    # Map CSV damage type to GlassDamageType enum
+    damage_type_str = row.get('DamageType', '').strip().upper() if row.get('DamageType') else ''
+    location_str = row.get('Location', '').strip().upper() if row.get('Location') else ''
+    
+    # Map common CSV values to enum values
+    glass_damage_type = None
+    if 'REPLACEMENT' in damage_type_str or 'WINDSHIELD' in location_str.upper():
+        glass_damage_type = GlassDamageType.WINDSHIELD_CRACK  # Default to crack for windshield replacement
+    elif 'CHIP' in damage_type_str:
+        glass_damage_type = GlassDamageType.WINDSHIELD_CHIP
+    elif 'SIDE' in location_str or 'REAR' in location_str:
+        glass_damage_type = GlassDamageType.SIDE_REAR_WINDOW_DAMAGE
+    else:
+        glass_damage_type = GlassDamageType.UNKNOWN
+    
     return WorkItemConfig(
         mva=mva,
-        damage_type=row.get('DamageType'),
-        location=row.get('Location')
+        damage_type=glass_damage_type.value,  # Store enum value as string
+        location=location_str
     )
 
 def log_work_item_config(config):
     """Log details of a WorkItemConfig."""
     log.info(f"[CSV] Loading work item: {config.mva} (DamageType: {config.damage_type}, Location: {config.location})")
 
-def get_work_item_configs(csv_path):
-    """Read, filter, create, and log WorkItemConfig objects from CSV."""
-    rows = read_csv_rows(csv_path)
-    configs = []
-    for row in rows:
-        config = create_work_item_config(row)
-        configs.append(config)
-        log_work_item_config(config)
-    return configs
-
-
-# ----------------------------------------------------------------------------
-# AUTHOR:       Dirk Steele <dirk.avis@mail.com>
-# DATE:         2026-01-12
-# DESCRIPTION:  Read glass work items from CSV and return WorkItemConfig objects.
-#               Skips comments and empty rows, logs each loaded config.
-# VERSION:      1.0.0
-# NOTES:        Expects columns: MVA, DamageType, Location.
-# ----------------------------------------------------------------------------
-
-def main():
-    username = get_config("username")
-    password = get_config("password")
-    login_id = get_config("login_id")
-    driver = create_driver()
-    mva_input_page = MVAInputPage(driver)
-    login_flow = LoginFlow(driver)
-    login_result = login_flow.login_handler(username, password, login_id)
-    if login_result.get("status") != "ok":
-        log.error(f"[LOGIN] Failed to initialize session → {login_result}")
-        return
-
-    mva_list = get_work_item_configs(MVA_CSV)
-    for work_item_config in mva_list:
-        # after finding the first work item type sought we can break out of the loop
-        mva = work_item_config.mva
-        mva_header = f"\n{'*'*32}\nMVA {mva}\n{'*'*32}"
-        log.info(mva_header)
-        log.info(f"[MVA] Reviewing {mva} (Type: {work_item_config.damage_type}, Location: {work_item_config.location})")
-        max_attempts = 2
-        for attempt in range(1, max_attempts + 1):
-            try:
-                # --- Robust MVA input logic (from GlassDataParser.py) ---
-                input_field = mva_input_page.find_input()
-                if not (input_field and input_field.is_enabled() and input_field.is_displayed()):
-                    try:
-                        input_field = WebDriverWait(driver, 5, poll_frequency=0.25).until(
-                            lambda d: (
-                                (f := mva_input_page.find_input()) and f.is_enabled() and f.is_displayed() and f
-                            )
-                        )
-                    except TimeoutException:
-                        input_field = None
-                if not input_field:
-                    log.error(f"[MVA][FATAL] Could not find MVA input field for {mva}. Attempt {attempt}/{max_attempts}.")
-                    if attempt == max_attempts:
-                        log.error(f"[MVA][FATAL] Skipping {mva} after {max_attempts} attempts.")
-                        break
-                    else:
-                        time.sleep(2)
-                        continue
-                import selenium.webdriver.common.keys as Keys
-                # Aggressively clear the field
-                # We don't need an aggressive clear here.  Just clear the field once and verify.  If still not cleared, log an error.
-                # Refactoring to simplify the logic. into one clear attempt followed by verification.
-                # we may need to have a slight delay after clear to allow UI to update(3000ms)
-                # Background knowledge: The application will clear the field with an <ENTER>. This is a shortcut we can use.
-
-
-                for _ in range(3):
-                    input_field.send_keys(Keys.Keys.CONTROL + 'a')
-                    input_field.send_keys(Keys.Keys.DELETE)
-                    input_field.clear()
-                    time.sleep(0.2)
-                # Wait up to 1s (4 x 250ms) for the field to be empty
-                for _ in range(4):
-                    if input_field.get_attribute("value") == "":
-                        break
-                    time.sleep(0.25)
-                else:
-                    log.warning(f"[MVA_INPUT] Field not empty after clearing attempts!")
-                # Wait up to 3 seconds for the field to be empty
-                for _ in range(15):
-                    if input_field.get_attribute("value") == "":
-                        break
-                    time.sleep(0.2)
-                if input_field.get_attribute("value") != "":
-                    log.warning(f"[MVA_INPUT] Field not fully cleared before entering new MVA!")
-                else:
-                    log.info(f"[MVA_INPUT] Field cleared before entering new MVA.")
-                input_field.send_keys(mva)
-                # Don't send Enter - the application auto-searches after 8 digits
-                log.info(f"[MVA_INPUT] Entered MVA: {mva}")
-
-                # --- End robust MVA input logic ---
-
-                # Wait for vehicle properties container to appear (indicates valid MVA)
-                try:
-                    log.info(f"[MVA_VALIDATION] Waiting for vehicle properties to load for {mva}...")
-                    vehicle_properties = WebDriverWait(driver, 30, poll_frequency=1.0).until(
-                        EC.presence_of_element_located((By.CSS_SELECTOR, "div.fleet-operations-pwa__vehicle-properties-container__1ad7kyc"))
-                    )
-                    log.info(f"[MVA_VALIDATION] Vehicle properties loaded successfully for {mva}")
-                except TimeoutException:
-                    log.warning(f"[MVA_VALIDATION] Vehicle properties not found for {mva} - MVA may be invalid or non-existent")
-                    break  # Skip to next MVA
-
-                # Dynamic wait for work items to load/update after vehicle properties appear  
-                # Poll every 0.5 seconds with 3 second timeout for responsive timing
-                try:
-                    log.info(f"[MVA_VALIDATION] Waiting for work items to load for {mva}...")
-                    WebDriverWait(driver, 3.0, poll_frequency=0.5).until(
-                        lambda d: len(d.find_elements(By.CSS_SELECTOR, ".work-item, [class*='work-item'], [class*='workitem']")) > 0
-                    )
-                    log.info(f"[MVA_VALIDATION] Work items loaded successfully for {mva}")
-                except TimeoutException:
-                    log.info(f"[MVA_VALIDATION] No work items found after 3 seconds for {mva} - assuming none exist")
-                
-                # Brief pause to ensure UI is stable after work item detection
-                time.sleep(0.2)
-                work_items = get_work_items(driver, mva)
-                # Only proceed if there are no glass work items
-                glass_found = False
-                for wi in work_items:
-                    # Debug: Log the actual text and its properties
-                    log.info(f"[DEBUG] Work item text: '{wi.text}'")
-                    log.info(f"[DEBUG] Text length: {len(wi.text)}")
-                    log.info(f"[DEBUG] Text repr: {repr(wi.text)}")
-                    log.info(f"[DEBUG] Lowercased: '{wi.text.lower()}'")
-                    log.info(f"[DEBUG] Contains 'glass': {'glass' in wi.text.lower()}")
-                    if "glass" in wi.text.lower():
-                        glass_found = True
-                        log.info(f"[GLASS] Glass damage work item already exists for {mva}")
-                        break
-                if glass_found:
-                    break  # No need to create a new work item, exit retry loop
-
-                # If there are work items but none are glass, or if there are no work items at all, create new glass work item
-                
-                #import pdb; pdb.set_trace()  # DEBUG: Breakpoint before waiting for vehicle properties
-                #This was renamed to create_work_item_handler in work_item_flow.py
-                from flows.work_item_flow import create_work_item_with_handler
-                result = create_work_item_with_handler(driver, work_item_config, handler_type="GLASS")
-                if result.get("status") == "created":
-                    log.info(f"[GLASS] Glass damage work item created for {mva}")
-                else:
-                    log.error(f"[GLASS][ERROR] Failed to create glass work item for {mva}: {result}")
-                
-                # Navigate back to home page for next MVA
-                try:
-                    navigate_back_to_home(driver)
-                    log.info(f"[NAVIGATION] Successfully navigated back to home page after processing {mva}")
-                except Exception as nav_error:
-                    log.error(f"[NAVIGATION][ERROR] Failed to navigate back to home page: {nav_error}")
-                
-                break  # Success or failure, exit retry loop
-            except Exception as e:
-                log.error(f"[ERROR] Exception for {mva} (attempt {attempt}/{max_attempts}): {e}")
-                if attempt == max_attempts:
-                    log.error(f"[MVA][FATAL] Skipping {mva} after {max_attempts} attempts due to repeated errors.")
-                else:
-                    time.sleep(2)
-        time.sleep(2)
-
-    # Ensure the browser is closed after all automation is finished
-    try:
-        quit_driver()
-        log.info("[SESSION] Browser closed.")
-    except Exception as e:
-        log.warning(f"[SESSION] Failed to close browser: {e}")
-
-# ----------------------------------------------------------------------------
-# AUTHOR:       Dirk Steele <dirk.avis@mail.com>
-# DATE:         2026-01-12
-# DESCRIPTION:  Main script logic. Logs in, iterates MVAs, checks for glass work items,
-#               and creates new ones if needed. Handles robust MVA input and error handling.
-# VERSION:      1.0.0
-# NOTES:        Uses robust field clearing and retry logic for reliability.
-# ----------------------------------------------------------------------------
-
-if __name__ == "__main__":
-    main()
 def select_glass_damage_option(driver, option_text="Glass Damage"):
     """
     Selects a glass damage option by visible text (e.g., 'Windshield Crack', 'Windshield Chip', 'Side/Rear Window Damage').
@@ -426,3 +354,149 @@ def click_mileage_next(driver):
     except Exception as e:
         log.error(f"[STEP][ERROR] Failed to click 'Next' button on Mileage screen: {e}")
         return False
+
+def get_work_item_configs(csv_path):
+    """Read, filter, create, and log WorkItemConfig objects from CSV."""
+    rows = read_csv_rows(csv_path)
+    configs = []
+    for row in rows:
+        config = create_work_item_config(row)
+        configs.append(config)
+        log_work_item_config(config)
+    return configs
+
+
+# ----------------------------------------------------------------------------
+# AUTHOR:       Dirk Steele <dirk.avis@mail.com>
+# DATE:         2026-01-12
+# DESCRIPTION:  Read glass work items from CSV and return WorkItemConfig objects.
+#               Skips comments and empty rows, logs each loaded config.
+# VERSION:      1.0.0
+# NOTES:        Expects columns: MVA, DamageType, Location.
+# ----------------------------------------------------------------------------
+
+def main():
+    username = get_config("username")
+    password = get_config("password")
+    login_id = get_config("login_id")
+    driver = create_driver()
+    mva_input_page = MVAInputPage(driver)
+    login_flow = LoginFlow(driver)
+    login_result = login_flow.login_handler(username, password, login_id)
+    if login_result.get("status") != "ok":
+        log.error(f"[LOGIN] Failed to initialize session → {login_result}")
+        return
+
+    mva_list = get_work_item_configs(MVA_CSV)
+    for work_item_config in mva_list:
+        # after finding the first work item type sought we can break out of the loop
+        mva = work_item_config.mva
+        mva_header = f"\n{'*'*32}\nMVA {mva}\n{'*'*32}"
+        log.info(mva_header)
+        log.info(f"[MVA] Reviewing {mva} (Type: {work_item_config.damage_type}, Location: {work_item_config.location})")
+        max_attempts = 2
+        for attempt in range(1, max_attempts + 1):
+            try:
+                # --- Robust MVA input logic using helper functions ---
+                input_field = find_mva_input_field(mva_input_page, mva, attempt, max_attempts)
+                if not input_field:
+                    if attempt < max_attempts:
+                        time.sleep(2)
+                    continue  # Skip to next attempt or exit loop
+                    
+                # Clear field and enter new MVA
+                if not clear_and_enter_mva(input_field, mva):
+                    log.error(f"[MVA_INPUT] Failed to clear and enter MVA {mva}")
+                    if attempt < max_attempts:
+                        time.sleep(2)
+                    continue  # Skip to next attempt
+
+                # --- End robust MVA input logic ---
+
+                # Wait for vehicle properties container to appear (indicates valid MVA)
+                try:
+                    log.info(f"[MVA_VALIDATION] Waiting for vehicle properties to load for {mva}...")
+                    WebDriverWait(driver, 30, poll_frequency=1.0).until(
+                        EC.presence_of_element_located((By.CSS_SELECTOR, "div.fleet-operations-pwa__vehicle-properties-container__1ad7kyc"))
+                    )
+                    log.info(f"[MVA_VALIDATION] Vehicle properties loaded successfully for {mva}")
+                except TimeoutException:
+                    log.warning(f"[MVA_VALIDATION] Vehicle properties not found for {mva} - MVA may be invalid or non-existent")
+                    break  # Skip to next MVA
+
+                # Dynamic wait for work items to load/update after vehicle properties appear  
+                # Poll every 0.5 seconds with 3 second timeout for responsive timing
+                try:
+                    log.info(f"[MVA_VALIDATION] Waiting for work items to load for {mva}...")
+                    WebDriverWait(driver, 3.0, poll_frequency=0.5).until(
+                        lambda d: len(d.find_elements(By.CSS_SELECTOR, ".work-item, [class*='work-item'], [class*='workitem']")) > 0
+                    )
+                    log.info(f"[MVA_VALIDATION] Work items loaded successfully for {mva}")
+                except TimeoutException:
+                    log.info(f"[MVA_VALIDATION] No work items found after 3 seconds for {mva} - assuming none exist")
+                
+                # Brief pause to ensure UI is stable after work item detection
+                time.sleep(0.2)
+                work_items = get_work_items(driver, mva)
+                # Only proceed if there are no existing glass work items
+                glass_found = False
+                glass_complaint_label = ComplaintType.GLASS_DAMAGE.value.lower()  # "glass damage"
+                for wi in work_items:
+                    # Debug: Log the actual text and its properties
+                    log.info(f"[DEBUG] Work item text: '{wi.text}'")
+                    log.info(f"[DEBUG] Text length: {len(wi.text)}")
+                    log.info(f"[DEBUG] Text repr: {repr(wi.text)}")
+                    log.info(f"[DEBUG] Lowercased: '{wi.text.lower()}'")
+                    log.info(f"[DEBUG] Contains '{glass_complaint_label}': {glass_complaint_label in wi.text.lower()}")
+                    if glass_complaint_label in wi.text.lower():
+                        glass_found = True
+                        log.info(f"[GLASS] Glass damage work item already exists for {mva}")
+                        break
+                if glass_found:
+                    break  # No need to create a new work item, exit retry loop
+
+                # If there are work items but none are glass, or if there are no work items at all, create new glass work item
+                
+                #import pdb; pdb.set_trace()  # DEBUG: Breakpoint before waiting for vehicle properties
+                #This was renamed to create_work_item_handler in work_item_flow.py
+                from flows.work_item_flow import create_work_item_with_handler
+                result = create_work_item_with_handler(driver, work_item_config, handler_type="GLASS")
+                if result.get("status") == "created":
+                    log.info(f"[GLASS] Glass damage work item created for {mva}")
+                else:
+                    log.error(f"[GLASS][ERROR] Failed to create glass work item for {mva}: {result}")
+                
+                # Navigate back to home page for next MVA
+                try:
+                    navigate_back_to_home(driver)
+                    log.info(f"[NAVIGATION] Successfully navigated back to home page after processing {mva}")
+                except Exception as nav_error:
+                    log.error(f"[NAVIGATION][ERROR] Failed to navigate back to home page: {nav_error}")
+                
+                break  # Success or failure, exit retry loop
+            except Exception as e:
+                log.error(f"[ERROR] Exception for {mva} (attempt {attempt}/{max_attempts}): {e}")
+                if attempt == max_attempts:
+                    log.error(f"[MVA][FATAL] Skipping {mva} after {max_attempts} attempts due to repeated errors.")
+                else:
+                    time.sleep(2)
+        time.sleep(2)
+
+    # Ensure the browser is closed after all automation is finished
+    try:
+        quit_driver()
+        log.info("[SESSION] Browser closed.")
+    except Exception as e:
+        log.warning(f"[SESSION] Failed to close browser: {e}")
+
+# ----------------------------------------------------------------------------
+# AUTHOR:       Dirk Steele <dirk.avis@mail.com>
+# DATE:         2026-01-12
+# DESCRIPTION:  Main script logic. Logs in, iterates MVAs, checks for glass work items,
+#               and creates new ones if needed. Handles robust MVA input and error handling.
+# VERSION:      1.0.0
+# NOTES:        Uses robust field clearing and retry logic for reliability.
+# ----------------------------------------------------------------------------
+
+if __name__ == "__main__":
+    main()

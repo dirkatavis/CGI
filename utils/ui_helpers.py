@@ -13,11 +13,47 @@ Provides common helper functions for finding elements, clicking, sending text, e
 
 def navigate_back_to_home(driver):
     """
-    Placeholder for navigation logic to return to the home page in the UI.
+    Navigate back to the home page by clicking the specific Fleet Operations PWA back arrow button.
+    Raises exception if the back button is not found or navigation fails.
     """
-    log.info("[NAV] Navigating back to home (stub function called)")
-    # TODO: Implement actual navigation logic as needed
-    pass
+    from selenium.webdriver.common.by import By
+    import time
+    
+    def verify_home_page():
+        """Verify we're back on the main page by checking for MVA input field."""
+        try:
+            WebDriverWait(driver, 5).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, "input[placeholder*='MVA'], input[id*='mva'], input[name*='mva']"))
+            )
+            log.info("[NAV] Successfully verified return to main page")
+            return True
+        except TimeoutException:
+            log.error("[NAV] Could not verify main page MVA input field")
+            return False
+    
+    try:
+        log.info("[NAV] Attempting to navigate back to home page...")
+        
+        # Find and click the specific Fleet Operations PWA back button
+        back_button = driver.find_element(By.CLASS_NAME, "fleet-operations-pwa__back-button__1bx4xor")
+        back_button.click()
+        log.info("[NAV] Successfully clicked Fleet Operations PWA back button")
+        
+        # Wait for navigation and verify home page
+        time.sleep(2)
+        if verify_home_page():
+            log.info("[NAV] SUCCESS: Navigation back to home page completed successfully")
+            return True
+        else:
+            log.error("[NAV] FAILURE: Back button clicked but home page verification failed")
+            raise Exception("Back button clicked but home page verification failed")
+        
+    except NoSuchElementException:
+        log.error("[NAV] FAILURE: Fleet Operations PWA back button not found - cannot navigate back to home")
+        raise Exception("Fleet Operations PWA back button not found - cannot navigate back to home")
+    except Exception as e:
+        log.error(f"[NAV] FAILURE: Navigation back to home failed - {e}")
+        raise Exception(f"Navigation back to home failed: {e}")
 
 def find_elements(driver, locator, timeout=10):
     """

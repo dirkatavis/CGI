@@ -11,6 +11,7 @@ from flows.work_item_flow import get_work_items
 from flows.complaints_flows import detect_existing_complaints, handle_new_complaint
 from pages.work_item import WorkItem
 from pages.mva_input_page import MVAInputPage
+from utils.ui_helpers import navigate_back_to_home
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -251,7 +252,7 @@ def main():
                 # Wait for vehicle properties container to appear (indicates valid MVA)
                 try:
                     log.info(f"[MVA_VALIDATION] Waiting for vehicle properties to load for {mva}...")
-                    vehicle_properties = WebDriverWait(driver, 15).until(
+                    vehicle_properties = WebDriverWait(driver, 30, poll_frequency=1.0).until(
                         EC.presence_of_element_located((By.CSS_SELECTOR, "div.fleet-operations-pwa__vehicle-properties-container__1ad7kyc"))
                     )
                     log.info(f"[MVA_VALIDATION] Vehicle properties loaded successfully for {mva}")
@@ -259,9 +260,19 @@ def main():
                     log.warning(f"[MVA_VALIDATION] Vehicle properties not found for {mva} - MVA may be invalid or non-existent")
                     break  # Skip to next MVA
 
-                # Additional wait for work items to update after vehicle properties load
-                # Convert this to a wait for the work items container instead of a fixed sleep
-                time.sleep(2)
+                # Dynamic wait for work items to load/update after vehicle properties appear  
+                # Poll every 0.5 seconds with 3 second timeout for responsive timing
+                try:
+                    log.info(f"[MVA_VALIDATION] Waiting for work items to load for {mva}...")
+                    WebDriverWait(driver, 3.0, poll_frequency=0.5).until(
+                        lambda d: len(d.find_elements(By.CSS_SELECTOR, ".work-item, [class*='work-item'], [class*='workitem']")) > 0
+                    )
+                    log.info(f"[MVA_VALIDATION] Work items loaded successfully for {mva}")
+                except TimeoutException:
+                    log.info(f"[MVA_VALIDATION] No work items found after 3 seconds for {mva} - assuming none exist")
+                
+                # Brief pause to ensure UI is stable after work item detection
+                time.sleep(0.2)
                 work_items = get_work_items(driver, mva)
                 # Only proceed if there are no glass work items
                 glass_found = False
@@ -289,6 +300,14 @@ def main():
                     log.info(f"[GLASS] Glass damage work item created for {mva}")
                 else:
                     log.error(f"[GLASS][ERROR] Failed to create glass work item for {mva}: {result}")
+                
+                # Navigate back to home page for next MVA
+                try:
+                    navigate_back_to_home(driver)
+                    log.info(f"[NAVIGATION] Successfully navigated back to home page after processing {mva}")
+                except Exception as nav_error:
+                    log.error(f"[NAVIGATION][ERROR] Failed to navigate back to home page: {nav_error}")
+                
                 break  # Success or failure, exit retry loop
             except Exception as e:
                 log.error(f"[ERROR] Exception for {mva} (attempt {attempt}/{max_attempts}): {e}")

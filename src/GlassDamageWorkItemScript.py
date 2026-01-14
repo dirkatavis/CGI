@@ -4,7 +4,7 @@ import os
 import time
 import csv
 from utils.logger import log
-from core.driver_manager import get_driver, quit_driver
+from core.driver_manager import create_driver, quit_driver
 from config.config_loader import get_config
 from flows.LoginFlow import LoginFlow
 from flows.work_item_flow import get_work_items
@@ -176,7 +176,7 @@ def main():
     username = get_config("username")
     password = get_config("password")
     login_id = get_config("login_id")
-    driver = get_driver()
+    driver = create_driver()
     mva_input_page = MVAInputPage(driver)
     login_flow = LoginFlow(driver)
     login_result = login_flow.login_handler(username, password, login_id)

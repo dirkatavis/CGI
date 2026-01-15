@@ -38,7 +38,7 @@ from flows.LoginFlow import LoginFlow
 from pages.vehicle_properties_page import VehiclePropertiesPage
 from pages.vehicle import Vehicle
 from pages.mva_input_page import MVAInputPage
-from core.driver_manager import get_driver, quit_driver
+from core.driver_manager import create_driver, get_driver, quit_driver
 from config.config_loader import get_config
 from utils.logger import log
 
@@ -80,6 +80,7 @@ def main():
     username = get_config("username")
     password = get_config("password")
     login_id = get_config("login_id")
+    create_driver()
     driver = get_driver()
     login_flow = LoginFlow(driver)
     login_result = login_flow.login_handler(username, password, login_id)

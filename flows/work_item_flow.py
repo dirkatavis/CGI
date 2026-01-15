@@ -10,16 +10,25 @@ from utils.logger import log
 from utils.ui_helpers import click_element, safe_wait
 
 def get_work_items(driver, mva: str):
-    """Collect all open PM work items for the given MVA."""
+    """Collect all open glass work items for the given MVA."""
     log.debug(f"[WORKITEM] {mva} - Getting work items.")
     log.info(f"[WORKITEM] {mva} - pausing to let Work Items render...")
-    time.sleep(9)  # wait for UI to render
+    #time.sleep(9)  # wait for UI to render
+    # Better: wait for the work items container to be present
+    safe_wait(driver, 15, EC.presence_of_element_located((By.XPATH, "//div[contains(@class, 'fleet-operations-pwa__scan-record__')]")), desc="Work Items container")
     try:
+        # Check for 'No work items yet...' message
+        no_items = driver.find_elements(By.XPATH, "//div[contains(@class, 'bp6-entity-title-title') and contains(text(), 'No work items yet')]")
+        if no_items:
+            log.info(f"[WORKITEMS] {mva} - No work items yet...")
+            return []
+
+        # Get all open work item tiles (not just glass)
         tiles = driver.find_elements(
             By.XPATH,
-            "//div[contains(@class, 'fleet-operations-pwa__scan-record__') and .//div[contains(@class, 'fleet-operations-pwa__scan-record-header-title-right__') and normalize-space()='Open'] and .//div[contains(@class, 'fleet-operations-pwa__scan-record-header-title__') and normalize-space()='PM Gas']]"
+            "//div[contains(@class, 'fleet-operations-pwa__scan-record__') and .//div[contains(@class, 'fleet-operations-pwa__scan-record-header-title-right__') and normalize-space()='Open']]"
         )
-        log.info(f"[WORKITEMS] {mva} - collected {len(tiles)} open PM work item(s)")
+        log.info(f"[WORKITEMS] {mva} - collected {len(tiles)} open work item(s)")
         for t in tiles:
             log.debug(f"[DBG] {mva} - tile text = {t.text!r}")
         return tiles
@@ -39,7 +48,8 @@ def create_new_workitem(driver, mva: str):
     # Step 1: Click Add Work Item
     try:
         time.sleep(5)  # wait for button to appear
-        if not click_element(driver, (By.XPATH, "//button[normalize-space()='Add Work Item']")):
+        # Increase timeout to 30 seconds for clicking Add Work Item
+        if not click_element(driver, (By.XPATH, "//button[normalize-space()='Add Work Item']"), timeout=30, desc="Add Work Item button"):
             log.warning(f"[WORKITEM][WARN] {mva} - add_btn not found")
             return {"status": "failed", "reason": "add_btn", "mva": mva}
         log.info(f"[WORKITEM] {mva} - Add Work Item clicked")
@@ -49,18 +59,21 @@ def create_new_workitem(driver, mva: str):
         log.warning(f"[WORKITEM][WARN] {mva} - add_btn failed -> {e}")
         return {"status": "failed", "reason": "add_btn", "mva": mva}
 
-    # Step 2: Complaint handling
+    # Step 2: Complaint handling (glass-specific)
+    from flows.complaints_flows import associate_existing_complaint, create_new_complaint
     try:
         res = associate_existing_complaint(driver, mva)
         if res["status"] == "associated":
-            log.info(
-                "[COMPLAINT][ASSOCIATED] {mva} - existing PM complaint linked to Work Item"
-            )
+            log.info(f"[GLASS][ASSOCIATED] {mva} - existing glass complaint linked to Work Item")
         else:
-            log.info(
-                "[WORKITEM][SKIP] {mva} - no existing PM complaint, navigating back"
-            )
-            return {"status": "skipped_no_complaint", "mva": mva}
+            log.info(f"[GLASS][INFO] {mva} - no existing glass complaint found, creating new complaint...")
+            # FOR GLASS: here is where the user would answer Is vehicle driverable? -> Yes/No
+            # This already  works for PM so we need to be careful not to break that flow.
+            # For now, we will assume "Yes" for driveable.
+            res = create_new_complaint(driver, mva, complaint_type=None)
+            if res["status"] != "created":
+                log.error(f"[GLASS][ERROR] {mva} - failed to create glass complaint: {res}")
+                return res
     except NoSuchElementException as e:
         log.warning(f"[WORKITEM][WARN] {mva} - complaint handling failed -> {e}")
         return {"status": "failed", "reason": "complaint_handling", "mva": mva}
@@ -68,6 +81,30 @@ def create_new_workitem(driver, mva: str):
     # Step 3: Finalize Work Item (call will be injected here in refactor later)
     log.warning(f"[WORKITEM][WARN] {mva} - finalize step skipped (refactor placeholder)")
     return {"status": "created", "mva": mva}
+
+
+def create_work_item_with_handler(driver, config, handler_type: str = "GLASS"):
+    """
+    Create a work item using the handler pattern.
+    
+    Args:
+        driver: WebDriver instance
+        config: WorkItemConfig object with MVA and work item specific data
+        handler_type: Type of work item handler to use (GLASS, PM, etc.)
+    Returns:
+        Dict with status and details of work item creation
+    """
+    from flows.work_item_handler import create_work_item_handler
+    
+    try:
+        # Create appropriate handler
+        handler = create_work_item_handler(handler_type, driver)
+        # Execute work item creation using handler
+        # 
+        return handler.create_work_item(config)
+    except Exception as e:
+        log.error(f"[WORKITEM][ERROR] {config.mva} - Handler execution failed: {e}")
+        return {"status": "failed", "reason": "handler_error", "mva": config.mva, "error": str(e)}
 
 
 def get_lighthouse_status(driver, mva: str) -> str | None:

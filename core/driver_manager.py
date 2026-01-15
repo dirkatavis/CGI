@@ -55,27 +55,22 @@ def get_driver_version(driver_path: str) -> str:
         return "unknown"
 
 
-def get_or_create_driver():
-    """Return singleton Edge WebDriver, creating it if needed."""
+
+def create_driver():
+    """Create a new Edge WebDriver. Raises error if driver already exists."""
     global _driver
     if _driver:
-        return _driver
-
+        raise RuntimeError("WebDriver already exists. Call quit_driver() before creating a new one.")
 
     browser_ver = get_browser_version()
     driver_ver = get_driver_version(DRIVER_PATH)
-   # Always log detected versions
     log.info(f"[DRIVER] Detected Browser={browser_ver}, Driver={driver_ver}")
-
-    # Compare before launching browser
     if browser_ver.split(".")[0] != driver_ver.split(".")[0]:
         log.error(f"[DRIVER] Version mismatch - Browser {browser_ver}, Driver {driver_ver}")
         raise RuntimeError("Edge/Driver version mismatch")
-
     try:
         log.info(f"[DRIVER] Launching Edge - Browser {browser_ver}, Driver {driver_ver}")
         options = webdriver.EdgeOptions()
-
         options.add_argument("--start-maximized")
         options.add_experimental_option("prefs", {
             "profile.default_content_setting_values.geolocation": 2 })
@@ -85,6 +80,14 @@ def get_or_create_driver():
     except SessionNotCreatedException as e:
         log.error(f"[DRIVER] Session creation failed: {e}")
         raise
+
+
+def get_driver():
+    """Return the existing Edge WebDriver, or raise error if not created."""
+    global _driver
+    if not _driver:
+        raise RuntimeError("WebDriver does not exist. Call create_driver() first.")
+    return _driver
 
 
 def quit_driver():

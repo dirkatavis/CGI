@@ -1,0 +1,76 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Log files
+*.log
+log/
+logs/
+
+# Artifacts folder contents
+artifacts/*
+
+# Virtual environments
+.env
+.venv/
+venv/
+env/
+
+# IDE specific files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Screenshot files (error screenshots)
+*.png
+*.jpg
+*.jpeg
+
+# Text files
+*.txt
+
+# Selenium driver executables
+chromedriver.exe
+geckodriver.exe
+msedgedriver.exe
+
+# Test results
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Config files with sensitive data (uncomment if needed)
+# config/config.json
+# config/secrets.json

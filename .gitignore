@@ -8,6 +8,9 @@ __pycache__/
 log/
 logs/
 
+# Artifacts folder contents
+artifacts/*
+
 # Virtual environments
 .env
 .venv/
@@ -33,6 +36,9 @@ Thumbs.db
 *.png
 *.jpg
 *.jpeg
+
+# Text files
+*.txt
 
 # Selenium driver executables
 chromedriver.exe

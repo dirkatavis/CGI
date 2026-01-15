@@ -244,14 +244,16 @@ def create_work_item_config(row):
     
     # Map common CSV values to enum values
     glass_damage_type = None
-    if 'REPLACEMENT' in damage_type_str or 'WINDSHIELD' in location_str.upper():
+    if 'REPLACEMENT' in damage_type_str and ('FRONT' in location_str or 'WINDSHIELD' in location_str):
         glass_damage_type = GlassDamageType.WINDSHIELD_CRACK  # Default to crack for windshield replacement
     elif 'CHIP' in damage_type_str:
         glass_damage_type = GlassDamageType.WINDSHIELD_CHIP
+    elif 'REPAIR' in damage_type_str and ('FRONT' in location_str or 'WINDSHIELD' in location_str):
+        glass_damage_type = GlassDamageType.WINDSHIELD_CHIP  # Repairs are typically for chips
     elif 'SIDE' in location_str or 'REAR' in location_str:
         glass_damage_type = GlassDamageType.SIDE_REAR_WINDOW_DAMAGE
     else:
-        glass_damage_type = GlassDamageType.UNKNOWN
+        glass_damage_type = GlassDamageType.WINDSHIELD_CRACK  # Default to windshield crack instead of unknown
     
     return WorkItemConfig(
         mva=mva,

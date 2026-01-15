@@ -223,13 +223,11 @@ def create_new_complaint(driver, mva: str, complaint_type: str = "glass") -> dic
         # complaint_type may be a string or GlassDamageType; normalize to enum if possible
         damage_type = complaint_type
         if not isinstance(damage_type, GlassDamageType):
-            try:
-                damage_type = GlassDamageType(damage_type)
-            except Exception:
-                log.warning(f"[GLASS][COMPLAINT][WARN] {mva} - Unknown glass damage type '{damage_type}', defaulting to UNKNOWN")
-                damage_type = GlassDamageType.UNKNOWN
+            # Convert string to enum - let exception bubble up if invalid
+            damage_type = GlassDamageType(damage_type)
         damage_label = damage_type.value
-        damage_btn_xpath = f"//button[.//h1[text()='{damage_label}']]"
+        # Use double quotes for XPath to handle apostrophes in text like "I don't know"
+        damage_btn_xpath = f'//button[.//h1[text()="{damage_label}"]]'
         if click_element(driver, (By.XPATH, damage_btn_xpath), timeout=10, desc=f"Glass Damage Type: {damage_label}"):
             log.info(f"[GLASS][COMPLAINT] {mva} - Glass damage type '{damage_label}' selected")
             time.sleep(2)  # allow auto-advance to Additional Info screen

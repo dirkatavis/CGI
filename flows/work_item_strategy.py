@@ -158,7 +158,7 @@ class GlassWorkItemHandler(WorkItemHandler):
         
         # For now, delegate to existing create_new_complaint with glass type
         # TODO: Update create_new_complaint to accept damage_type and location parameters
-        result = create_new_complaint(self.driver, config.mva, complaint_type="glass")
+        result = create_new_complaint(self.driver, config.mva, complaint_type=config.damage_type)
         
         if result.get("status") == "created":
             log.info(f"[GLASS] {config.mva} - New glass complaint created")

@@ -8,6 +8,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Optional, Dict, Any
 from utils.logger import log
+from core.complaint_types import GlassDamageType
 
 @dataclass
 class WorkItemConfig:
@@ -121,35 +122,29 @@ class WorkItemHandler(ABC):
 
 class GlassWorkItemHandler(WorkItemHandler):
     """Handler for Glass damage work items."""
-    # UI button text for glass damage types
-    DAMAGE_TYPE_UI = {
-        ("REPLACEMENT", "FRONT"): "Windshield Crack",
-        ("REPLACEMENT", "WINDSHIELD"): "Windshield Crack",
-        ("REPLACEMENT", "SIDE"): "Side/Rear Window Damage",
-        ("REPLACEMENT", "REAR"): "Side/Rear Window Damage",
-        ("REPLACEMENT", "TOP"): "Side/Rear Window Damage",
-        ("REPLACEMENT", "BACK"): "Side/Rear Window Damage",
-        ("REPLACEMENT", "UNKNOWN"): "I don't know",
-        ("REPAIR", "FRONT"): "Windshield Chip",
-        ("REPAIR", "WINDSHIELD"): "Windshield Chip",
-        ("REPAIR", "CHIP"): "Windshield Chip",
-        ("REPAIR", "SIDE"): "Side/Rear Window Damage",
-        ("REPAIR", "REAR"): "Side/Rear Window Damage",
-        ("REPAIR", "TOP"): "Side/Rear Window Damage",
-        ("REPAIR", "BACK"): "Side/Rear Window Damage",
-        ("REPAIR", "UNKNOWN"): "I don't know",
-    }
-    # Only the front (WINDSHIELD/FRONT/CHIP) can have a chip; all other locations map to Side/Rear Window Damage for repair/chip
-    def map_damage_type_to_ui(self, damage_type, location):
+    
+    def map_damage_type_to_ui(self, damage_type: str, location: str) -> str:
+        """Map damage type and location to appropriate GlassDamageType enum value."""
         dt = (damage_type or "REPLACEMENT").strip().upper()
         loc = (location or "UNKNOWN").strip().upper()
-        # Chip/repair only allowed for front/windshield
+        
+        # Determine the appropriate glass damage type based on damage type and location
         if dt in ("REPAIR", "CHIP"):
+            # Repair/chip operations
             if loc in ("FRONT", "WINDSHIELD", "CHIP"):
-                return "Windshield Chip"
+                return GlassDamageType.WINDSHIELD_CHIP.value
             else:
-                return "Side/Rear Window Damage"
-        return self.DAMAGE_TYPE_UI.get((dt, loc), self.DAMAGE_TYPE_UI.get((dt, "UNKNOWN"), "I don't know"))
+                # All non-windshield repairs map to side/rear damage
+                return GlassDamageType.SIDE_REAR_WINDOW_DAMAGE.value
+        else:
+            # Replacement operations
+            if loc in ("FRONT", "WINDSHIELD"):
+                return GlassDamageType.WINDSHIELD_CRACK.value
+            elif loc in ("SIDE", "REAR", "TOP", "BACK"):
+                return GlassDamageType.SIDE_REAR_WINDOW_DAMAGE.value
+            else:
+                # Unknown location defaults to unknown damage type
+                return GlassDamageType.UNKNOWN.value
     
     def get_work_item_type(self) -> str:
         """Return the work item type identifier."""

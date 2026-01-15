@@ -225,8 +225,38 @@ def create_new_complaint(driver, mva: str, complaint_type: str = "glass") -> dic
         # complaint_type may be a string or GlassDamageType; normalize to enum if possible
         damage_type = complaint_type
         if not isinstance(damage_type, GlassDamageType):
-            # Convert string to enum - let exception bubble up if invalid
-            damage_type = GlassDamageType(damage_type)
+            # Create a robust mapping for string to enum conversion
+            damage_mapping = {
+                # Exact enum values
+                "Windshield Crack": GlassDamageType.WINDSHIELD_CRACK,
+                "Windshield Chip": GlassDamageType.WINDSHIELD_CHIP,
+                "Side/Rear Window Damage": GlassDamageType.SIDE_REAR_WINDOW_DAMAGE,
+                "I don't know": GlassDamageType.UNKNOWN,
+                
+                # Common variations and CSV values
+                "REPLACEMENT": GlassDamageType.WINDSHIELD_CRACK,
+                "REPAIR": GlassDamageType.WINDSHIELD_CHIP,
+                "CRACK": GlassDamageType.WINDSHIELD_CRACK,
+                "CHIP": GlassDamageType.WINDSHIELD_CHIP,
+                "WINDSHIELD": GlassDamageType.WINDSHIELD_CRACK,
+                "FRONT": GlassDamageType.WINDSHIELD_CRACK,
+                "SIDE": GlassDamageType.SIDE_REAR_WINDOW_DAMAGE,
+                "REAR": GlassDamageType.SIDE_REAR_WINDOW_DAMAGE,
+                "UNKNOWN": GlassDamageType.UNKNOWN,
+            }
+            
+            # Try exact match first, then case-insensitive match
+            if damage_type in damage_mapping:
+                damage_type = damage_mapping[damage_type]
+            elif damage_type and damage_type.upper() in damage_mapping:
+                damage_type = damage_mapping[damage_type.upper()]
+            else:
+                # Try direct enum conversion as fallback
+                try:
+                    damage_type = GlassDamageType(damage_type)
+                except ValueError:
+                    log.warning(f"[GLASS][COMPLAINT][WARN] {mva} - Unknown damage type '{damage_type}', using default")
+                    damage_type = GlassDamageType.UNKNOWN
         damage_label = damage_type.value
         # Use double quotes for XPath to handle apostrophes in text like "I don't know"
         damage_btn_xpath = f'//button[.//h1[text()="{damage_label}"]]'

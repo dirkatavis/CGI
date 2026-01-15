@@ -9,7 +9,7 @@ from config.config_loader import get_config
 from flows.LoginFlow import LoginFlow
 from flows.work_item_flow import get_work_items
 from flows.complaints_flows import detect_existing_complaints, handle_new_complaint
-from flows.work_item_strategy import WorkItemConfig
+from flows.work_item_handler import WorkItemConfig
 from core.complaint_types import ComplaintType, GlassDamageType
 from pages.work_item import WorkItem
 from pages.mva_input_page import MVAInputPage

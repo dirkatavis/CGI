@@ -53,17 +53,6 @@ def create_new_workitem(driver, mva: str):
             log.warning(f"[WORKITEM][WARN] {mva} - add_btn not found")
             return {"status": "failed", "reason": "add_btn", "mva": mva}
         log.info(f"[WORKITEM] {mva} - Add Work Item clicked")
-        # --- User Pause for HTML Capture ---
-        try:
-            import tkinter as tk
-            from tkinter import messagebox
-            root = tk.Tk()
-            root.withdraw()
-            
-            root.destroy()
-        except Exception as e:
-            log.warning(f"[PAUSE] Could not show messagebox: {e}")
-        # --- End User Pause ---
         time.sleep(5)
 
     except NoSuchElementException:
@@ -80,8 +69,8 @@ def create_new_workitem(driver, mva: str):
             log.info(f"[GLASS][INFO] {mva} - no existing glass complaint found, creating new complaint...")
             # FOR GLASS: here is where the user would answer Is vehicle driverable? -> Yes/No
             # This already  works for PM so we need to be careful not to break that flow.
-            # For now, we will assume "Yes" for driverable.
-            res = create_new_complaint(driver, mva, complaint_type=config.damage_type)
+            # For now, we will assume "Yes" for driveable.
+            res = create_new_complaint(driver, mva, complaint_type=None)
             if res["status"] != "created":
                 log.error(f"[GLASS][ERROR] {mva} - failed to create glass complaint: {res}")
                 return res

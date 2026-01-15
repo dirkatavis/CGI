@@ -1,4 +1,5 @@
 import time
+import os
 
 from selenium.webdriver.common.by import By
 from utils.logger import log
@@ -10,6 +11,7 @@ from utils.ui_helpers import click_element
 from flows.opcode_flows import select_opcode    
 from flows.mileage_flows import complete_mileage_dialog
 from core.complaint_types import ComplaintType, GlassDamageType
+from utils.project_paths import ProjectPaths
 
 
 
@@ -236,8 +238,12 @@ def create_new_complaint(driver, mva: str, complaint_type: str = "glass") -> dic
             # Diagnostic: log page source
             try:
                 log.error(driver.page_source)
-                driver.save_screenshot(f"glass_damage_type_error_{mva}.png")
-                log.info(f"Saved screenshot to glass_damage_type_error_{mva}.png")
+                # Ensure artifacts directory exists
+                artifacts_dir = os.path.join(ProjectPaths.get_project_root(), "artifacts")
+                os.makedirs(artifacts_dir, exist_ok=True)
+                screenshot_path = os.path.join(artifacts_dir, f"glass_damage_type_error_{mva}.png")
+                driver.save_screenshot(screenshot_path)
+                log.info(f"Saved screenshot to {screenshot_path}")
             except Exception as se:
                 log.error(f"Failed to save screenshot: {se}")
             return {"status": "failed", "reason": "glass_damage_type", "mva": mva}
@@ -251,8 +257,12 @@ def create_new_complaint(driver, mva: str, complaint_type: str = "glass") -> dic
             log.warning(f"[GLASS][COMPLAINT][WARN] {mva} - could not submit Additional Info")
             try:
                 log.error(driver.page_source)
-                driver.save_screenshot(f"submit_complaint_error_{mva}.png")
-                log.info(f"Saved screenshot to submit_complaint_error_{mva}.png")
+                # Ensure artifacts directory exists
+                artifacts_dir = os.path.join(ProjectPaths.get_project_root(), "artifacts")
+                os.makedirs(artifacts_dir, exist_ok=True)
+                screenshot_path = os.path.join(artifacts_dir, f"submit_complaint_error_{mva}.png")
+                driver.save_screenshot(screenshot_path)
+                log.info(f"Saved screenshot to {screenshot_path}")
             except Exception as se:
                 log.error(f"Failed to save screenshot: {se}")
             return {"status": "failed", "reason": "submit_info", "mva": mva}

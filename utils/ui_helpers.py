@@ -1,15 +1,44 @@
 
 # --- Imports ---
+import os
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from utils.logger import log
+from utils.project_paths import ProjectPaths
 
 """
 UI Helper utilities for Selenium interactions.
 
 Provides common helper functions for finding elements, clicking, sending text, etc.
 """
+
+def _dump_artifacts(driver, prefix="debug"):
+    """
+    Debug utility: save screenshot and page source to artifacts directory.
+    
+    Args:
+        driver: WebDriver instance
+        prefix: Filename prefix for the artifacts
+    """
+    try:
+        # Ensure artifacts directory exists
+        artifacts_dir = os.path.join(ProjectPaths.get_project_root(), "artifacts")
+        os.makedirs(artifacts_dir, exist_ok=True)
+        
+        # Save screenshot
+        screenshot_path = os.path.join(artifacts_dir, f"{prefix}_screenshot.png")
+        driver.save_screenshot(screenshot_path)
+        log.info(f"Debug: Saved screenshot to {screenshot_path}")
+        
+        # Save page source  
+        source_path = os.path.join(artifacts_dir, f"{prefix}_source.html")
+        with open(source_path, "w", encoding="utf-8") as f:
+            f.write(driver.page_source)
+        log.info(f"Debug: Saved page source to {source_path}")
+        
+    except Exception as e:
+        log.error(f"Failed to save debug artifacts: {e}")
 
 def navigate_back_to_home(driver):
     """

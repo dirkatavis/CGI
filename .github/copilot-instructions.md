@@ -40,3 +40,8 @@ python GlassDataParser.py
 - See `read_mva_list()` and `main()` in `GlassDataParser.py` for the core data flow.
 - Input: `data/mva.csv` (plain list of MVA numbers).
 - Output: `GlassResults.txt` (CSV format: MVA, VIN, Desc).
+
+## Maintenance Notes
+- Locator resilience: The Compass Mobile button label may change (e.g., "Compass Mobile (Leaving Soon...)"), so use an XPath contains match rather than exact text. See the locator in [pages/login_page.py](pages/login_page.py#L196).
+- Local-only data: CSVs in [data/](data/) are environment-specific and can be marked `skip-worktree` to ignore local edits without removing them from version control.
+- Ignored artifacts: Logs, caches (`__pycache__/`, `*.pyc`), driver binaries (e.g., [msedgedriver.exe](msedgedriver.exe)), and generated outputs like [GlassResults.txt](GlassResults.txt) should remain untracked as per `.gitignore`.

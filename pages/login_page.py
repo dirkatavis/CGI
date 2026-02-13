@@ -193,7 +193,7 @@ class LoginPage:
             EC.element_to_be_clickable(
                 (
                     By.XPATH,
-                    "//a[@role='button']//span[normalize-space()='Compass Mobile']",
+                    "//a[@role='button']//span[contains(normalize-space(.), 'Compass Mobile')]",
                 )
             ),
             "compass_mobile_button",

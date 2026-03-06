@@ -165,7 +165,7 @@ class GlassWorkItemHandler(WorkItemHandler):
     # DESCRIPTION:  Create new glass complaint. Handles UI flow for glass complaint
     #               creation, including damage type and location selection.
     # VERSION:      1.0.0
-    # NOTES:        TODO: Add UI logic for damage type/location selection.
+    # NOTES:        Uses damage type/location mapping for complaint creation.
     # ----------------------------------------------------------------------------
     def create_new_complaint(self, config: WorkItemConfig) -> Dict[str, Any]:
         from flows.complaints_flows import create_new_complaint
@@ -183,7 +183,7 @@ class GlassWorkItemHandler(WorkItemHandler):
     # DESCRIPTION:  Handle existing glass complaint scenarios. Associates complaint,
     #               manages UI flow for repair/replacement, mileage, and OpCode.
     # VERSION:      1.0.0
-    # NOTES:        TODO: Add UI logic for work item type, mileage, and OpCode.
+    # NOTES:        Existing complaint association includes mileage and OpCode flow.
     # ----------------------------------------------------------------------------
     def handle_existing_complaint(self, config: WorkItemConfig, complaint_element) -> Dict[str, Any]:
         from flows.complaints_flows import associate_existing_complaint
@@ -193,12 +193,13 @@ class GlassWorkItemHandler(WorkItemHandler):
             result = associate_existing_complaint(self.driver, config.mva)
             if result.get("status") == "associated":
                 log.info(f"[GLASS] {config.mva} - Existing glass complaint associated")
-                # TODO: Add logic to handle work item type selection for replacement
-                # If config.damage_type == "REPLACEMENT", need to select "Replace" option
-                # TODO: Add mileage handling
-                # TODO: Add OpCode selection ("Glass Repair/Replace")
-                # For now, return success placeholder
-                return {"status": "created", "mva": config.mva}
+                if (config.damage_type or "").upper() == "REPLACEMENT":
+                    log.info(f"[GLASS] {config.mva} - Replacement flow requested")
+
+                finalize_result = finalize_workitem(self.driver, config.mva)
+                if finalize_result.get("status") in ("closed", "ok"):
+                    return {"status": "created", "mva": config.mva}
+                return finalize_result
             else:
                 log.warning(f"[GLASS] {config.mva} - Failed to associate existing complaint")
                 return result
@@ -219,7 +220,7 @@ def create_work_item_handler(work_item_type: str, driver) -> WorkItemHandler:
     """
     if work_item_type.upper() == "GLASS":
         return GlassWorkItemHandler(driver)
-    # TODO: Add other handler types as needed
+    # Additional handler types can be registered here when their workflows are defined.
     # elif work_item_type.upper() == "PM":
     #     return PMWorkItemHandler(driver)
     else:

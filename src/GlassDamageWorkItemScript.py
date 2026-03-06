@@ -9,11 +9,12 @@ from config.config_loader import get_config
 from flows.LoginFlow import LoginFlow
 from flows.work_item_flow import get_work_items
 from flows.complaints_flows import detect_existing_complaints, handle_new_complaint
+from flows.opcode_flows import select_opcode
 from flows.work_item_handler import WorkItemConfig
 from core.complaint_types import ComplaintType, GlassDamageType
 from pages.work_item import WorkItem
 from pages.mva_input_page import MVAInputPage
-from utils.ui_helpers import navigate_back_to_home
+from utils.ui_helpers import click_element, navigate_back_to_home
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -71,19 +72,21 @@ def handle_drivability_screen(driver, answer_yes=True):
 
 def select_complaint_type_glass(driver):
     """Select Glass Damage on Complaint Type screen using enum value.
-    
-    TODO: Implement actual UI interaction to select glass damage complaint type.
-    This function currently serves as a placeholder.
     """
-    complaint_type = ComplaintType.GLASS_DAMAGE.value  # "Glass Damage"
-    log.error(f"[TODO] select_complaint_type_glass not implemented - would select {complaint_type}")
-    raise NotImplementedError(f"Function select_complaint_type_glass needs implementation to select {complaint_type}")
+    complaint_type = ComplaintType.GLASS_DAMAGE.value
+    if click_element(driver, (By.XPATH, f"//button[normalize-space()='{complaint_type}']"), timeout=10, desc="Glass complaint type"):
+        log.info(f"[STEP] Selected complaint type: {complaint_type}")
+        return True
+
+    if click_element(driver, (By.XPATH, f"//button[.//h1[text()=\"{complaint_type}\"]]"), timeout=10, desc="Glass complaint type"):
+        log.info(f"[STEP] Selected complaint type: {complaint_type}")
+        return True
+
+    log.error(f"[STEP][ERROR] Failed to select complaint type: {complaint_type}")
+    return False
 
 def select_glass_damage_type(driver, damage_type):
     """Select the specific glass damage type using enum value or string mapping.
-    
-    TODO: Implement actual UI interaction to select specific glass damage type.
-    This function currently serves as a placeholder.
     """
     # If damage_type is already an enum value, use it directly
     # If it's a string, try to map it to an enum
@@ -99,35 +102,27 @@ def select_glass_damage_type(driver, damage_type):
         }
         glass_type_label = damage_mapping.get(damage_type.upper(), GlassDamageType.UNKNOWN.value)
     
-    log.error(f"[TODO] select_glass_damage_type not implemented - would select {glass_type_label}")
-    raise NotImplementedError(f"Function select_glass_damage_type needs implementation to select {glass_type_label}")
+    return select_glass_damage_option(driver, option_text=glass_type_label)
 
 def submit_complaint(driver):
     """Click Submit Complaint button.
-    
-    TODO: Implement actual UI interaction to submit complaint form.
-    This function currently serves as a placeholder.
     """
-    log.error("[TODO] submit_complaint not implemented - would click Submit Complaint button")
-    raise NotImplementedError("Function submit_complaint needs implementation to click Submit Complaint button")
+    return click_submit_complaint(driver)
 
 def click_next_on_mileage(driver):
     """Click Next on the Mileage screen.
-    
-    TODO: Implement actual UI interaction to click Next button on mileage screen.
-    This function currently serves as a placeholder.
     """
-    log.error("[TODO] click_next_on_mileage not implemented - would click Next on Mileage screen")
-    raise NotImplementedError("Function click_next_on_mileage needs implementation to click Next button")
+    return click_mileage_next(driver)
 
 def select_opcode_glass(driver):
     """Select 'Glass Repair/Replace' on OpsCode screen.
-    
-    TODO: Implement actual UI interaction to select Glass Repair/Replace opcode.
-    This function currently serves as a placeholder.
     """
-    log.error("[TODO] select_opcode_glass not implemented - would select Glass Repair/Replace opcode")
-    raise NotImplementedError("Function select_opcode_glass needs implementation to select Glass Repair/Replace opcode")
+    result = select_opcode(driver, "N/A", code_text="Glass Repair/Replace")
+    if result.get("status") == "ok":
+        return True
+
+    fallback = select_opcode(driver, "N/A", code_text="Glass")
+    return fallback.get("status") == "ok"
 
 def click_create_work_item(driver):
     """Click Create Work Item button on OpsCode screen."""
@@ -459,8 +454,6 @@ def main():
 
                 # If there are work items but none are glass, or if there are no work items at all, create new glass work item
                 
-                #import pdb; pdb.set_trace()  # DEBUG: Breakpoint before waiting for vehicle properties
-                #This was renamed to create_work_item_handler in work_item_flow.py
                 from flows.work_item_flow import create_work_item_with_handler
                 result = create_work_item_with_handler(driver, work_item_config, handler_type="GLASS")
                 if result.get("status") == "created":

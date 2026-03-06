@@ -7,7 +7,6 @@ from utils.ui_helpers import (click_element, find_element , find_elements)
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
-from utils.ui_helpers import click_element
 from flows.opcode_flows import select_opcode    
 from flows.mileage_flows import complete_mileage_dialog
 from core.complaint_types import ComplaintType, GlassDamageType
@@ -159,7 +158,6 @@ def associate_existing_complaint(driver, mva: str) -> dict:
                 return {"status": "failed", "reason": "tile_click", "mva": mva}
 
             # Step 1: Complaint → Next
-            from utils.ui_helpers import click_next_in_dialog
             if not click_next_in_dialog(driver, timeout=8):
                 return {"status": "failed", "reason": "complaint_next", "mva": mva}
 
@@ -202,11 +200,9 @@ def create_new_complaint(driver, mva: str, complaint_type: str = "glass") -> dic
             log.warning(f"[GLASS][COMPLAINT][NEW][WARN] {mva} - could not click Add/Create New Complaint")
             return {"status": "failed", "reason": "add_btn"}
         log.info(f"[GLASS][COMPLAINT][NEW] {mva} - Add/Create New Complaint clicked")
-        #Need to replace sleep with wait for <ex
-        time.sleep(2)
 
         # 2. Handle Drivability (Yes/No). Simplest case -> always Yes
-        if not click_element(driver, (By.XPATH, "//button[normalize-space()='Yes']")):
+        if not click_element(driver, (By.XPATH, "//button[normalize-space()='Yes']"), timeout=10, desc="Drivability Yes"):
             log.warning(f"[GLASS][COMPLAINT][NEW][WARN] {mva} - could not click Yes in Drivability step")
             return {"status": "failed", "reason": "drivability"}
         log.info(f"[GLASS][COMPLAINT][NEW] {mva} - Drivability Yes clicked")

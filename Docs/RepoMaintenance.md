@@ -7,7 +7,7 @@
 **Ignored/Untracked Artifacts**
 - Python caches and bytecode: [__pycache__/](__pycache__/), `*.pyc`.
 - Logs and artifacts: [log/](log/), [artifacts/](artifacts/), `*.log`.
-- WebDriver binaries: [msedgedriver.exe](msedgedriver.exe).
+- WebDriver binaries: [msedgedriver.exe](msedgedriver.exe). The automation now falls back to Selenium Manager when the bundled Edge driver is missing or out of date.
 - Generated outputs: [GlassResults.txt](GlassResults.txt) — kept ignored.
 
 **Local-Only Data Files**
